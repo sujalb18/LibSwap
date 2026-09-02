@@ -4,7 +4,7 @@
   "description": "Library Management and Student Book Swapping System",
   "main": "server.js",
   "scripts": {
-     "start": "node server.js"
+    "start": "node server.js"
   },
   "repository": {
     "type": "git",
@@ -20,6 +20,7 @@
   "dependencies": {
     "dotenv": "^17.4.2",
     "express": "^5.2.1",
+    "mongodb": "^7.6.0",
     "mongoose": "^9.9.4"
   }
 }
