@@ -1,3 +1,5 @@
+import swapRoutes from './routes/swapRoutes.js';
+
 const express = require('express');
 const mongoose = require('mongoose');
 require('dotenv').config();
@@ -5,6 +7,7 @@ require('dotenv').config();
 const app = express();
 
 app.use(express.json());
+app.use("/swap", swapRoutes);
 
 const PORT = process.env.PORT || 3000;
 

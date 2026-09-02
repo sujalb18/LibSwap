@@ -1,0 +1,30 @@
+.modal {
+  display: none;
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,0.5);
+}
+
+.modal-content {
+  background: white;
+  width: 350px;
+  margin: 10% auto;
+  padding: 20px;
+  border-radius: 8px;
+}
+
+.btn {
+  padding: 10px 15px;
+  margin: 5px;
+  cursor: pointer;
+}
+
+.success {
+  background: green;
+  color: white;
+}
+
+.cancel {
+  background: gray;
+  color: white;
+}
