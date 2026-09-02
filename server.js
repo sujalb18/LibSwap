@@ -12,6 +12,9 @@ app.get('/', (req, res) => {
     res.send('LibSwap server is running');
 });
 
+const authRoutes = require('./routes/authRoutes');
+app.use('/api/auth', authRoutes);
+
 mongoose.connect(process.env.MONGODB_URI)
     .then(() => {
         console.log('Connected to MongoDB');
