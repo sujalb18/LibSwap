@@ -2,9 +2,17 @@ const express = require('express');
 const mongoose = require('mongoose');
 require('dotenv').config();
 
+const dashboardRoutes = require("./routes/dashboardRoutes.js");
+
 const app = express();
 
 app.use(express.json());
+
+// SERVE FRONTEND FILES
+app.use(express.static("public"));
+
+// DASHBOARD API ROUTES
+app.use("/dashboard", dashboardRoutes);
 
 const PORT = process.env.PORT || 3000;
 
