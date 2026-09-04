@@ -1,6 +1,8 @@
 const express = require('express');
 const mongoose = require('mongoose');
 const authRoutes = require('./routes/authRoutes');
+const bookRequestRoutes = require('./routes/bookRequestRoutes');
+const notificationRoutes = require('./routes/notificationRoutes');
 
 require('dotenv').config();
 
@@ -15,6 +17,8 @@ app.get('/', (req, res) => {
 });
 
 app.use('/api/auth', authRoutes);
+app.use('/api/book-requests', bookRequestRoutes);
+app.use('/api/notifications', notificationRoutes);
 
 mongoose.connect(process.env.MONGODB_URI)
     .then(() => {
