@@ -1,5 +1,9 @@
 const express = require('express');
 const mongoose = require('mongoose');
+const authRoutes = require('./routes/authRoutes');
+const bookRequestRoutes = require('./routes/bookRequestRoutes');
+const notificationRoutes = require('./routes/notificationRoutes');
+
 require('dotenv').config();
 
 const app = express();
@@ -11,6 +15,10 @@ const PORT = process.env.PORT || 3000;
 app.get('/', (req, res) => {
     res.send('LibSwap server is running');
 });
+
+app.use('/api/auth', authRoutes);
+app.use('/api/book-requests', bookRequestRoutes);
+app.use('/api/notifications', notificationRoutes);
 
 mongoose.connect(process.env.MONGODB_URI)
     .then(() => {
