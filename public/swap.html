@@ -1,39 +1,35 @@
 <!DOCTYPE html>
 <html lang="en">
-
 <head>
   <meta charset="UTF-8">
   <title>Swap Request</title>
   <link rel="stylesheet" href="css/swap.css">
 </head>
-
 <body>
 
-  <h2>Book Details</h2>
+  <header>
+    <h1>Send Swap Request</h1>
+    <button id="backBtn">Back to Dashboard</button>
+  </header>
 
-  <div id="book-container">
-    <!-- These values will be filled dynamically -->
-    <p><strong>Book:</strong> <span id="book-title"></span></p>
-    <p><strong>Owner:</strong> <span id="book-owner"></span></p>
+  <main>
+    <section>
+      <h2>Select a Book to Request</h2>
+      <div id="availableBooks"></div>
+    </section>
 
-    <button id="swapBtn" class="btn">Request Swap</button>
-  </div>
+    <section>
+      <h2>Your Books (to offer)</h2>
+      <div id="myBooks"></div>
+    </section>
 
-  <!-- Swap Modal -->
-  <div id="swapModal" class="modal">
-    <div class="modal-content">
-      <h3>Request Swap</h3>
-
-      <textarea id="swapMessage" placeholder="Add a message (optional)"></textarea>
-
-      <div class="actions">
-        <button id="sendSwap" class="btn success">Send Request</button>
-        <button id="closeModal" class="btn cancel">Cancel</button>
-      </div>
-    </div>
-  </div>
+    <section>
+      <h2>Send Request</h2>
+      <button id="sendRequestBtn" disabled>Send Swap Request</button>
+      <p id="statusMsg"></p>
+    </section>
+  </main>
 
   <script src="js/swap.js"></script>
 </body>
-
 </html>
