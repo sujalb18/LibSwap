@@ -3,6 +3,7 @@ const mongoose = require('mongoose');
 const authRoutes = require('./routes/authRoutes');
 const bookRequestRoutes = require('./routes/bookRequestRoutes');
 const notificationRoutes = require('./routes/notificationRoutes');
+const bookRoutes = require('./routes/bookRoutes');
 
 require('dotenv').config();
 
@@ -16,9 +17,13 @@ app.get('/', (req, res) => {
     res.send('LibSwap server is running');
 });
 
+// Authentication routes from the shared project
 app.use('/api/auth', authRoutes);
 app.use('/api/book-requests', bookRequestRoutes);
 app.use('/api/notifications', notificationRoutes);
+
+// Catalogue routes for US02
+app.use('/api/books', bookRoutes);
 
 mongoose.connect(process.env.MONGODB_URI)
     .then(() => {
