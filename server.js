@@ -14,6 +14,13 @@ app.get('/', (req, res) => {
     res.send('LibSwap server is running');
 });
 
+app.get('/api/student', (req, res) => {
+    res.json({
+        name: process.env.STUDENT_NAME,
+        studentId: process.env.STUDENT_ID
+    });
+});
+
 app.use('/api/auth', authRoutes);
 
 mongoose.connect(process.env.MONGODB_URI)
