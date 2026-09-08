@@ -2,6 +2,8 @@ const express = require('express');
 const mongoose = require('mongoose');
 const authRoutes = require('./routes/authRoutes');
 const bookRoutes = require('./routes/bookRoutes');
+const bookRequestRoutes = require('./routes/bookRequestRoutes');
+const notificationRoutes = require('./routes/notificationRoutes');
 
 require('dotenv').config();
 
@@ -23,6 +25,12 @@ app.use('/api/auth', authRoutes);
 
 // Catalogue routes for US02
 app.use('/api/books', bookRoutes);
+
+// Book request routes - ask for a book that isn't in the catalogue
+app.use('/api/book-requests', bookRequestRoutes);
+
+// Notification routes - library and book-swap activity alerts
+app.use('/api/notifications', notificationRoutes);
 
 mongoose.connect(process.env.MONGODB_URI)
     .then(() => {
