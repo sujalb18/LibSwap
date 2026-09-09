@@ -1,17 +1,18 @@
 const express = require('express');
 const mongoose = require('mongoose');
-require('dotenv').config();
-
+const authRoutes = require('./routes/authRoutes');
+const bookRoutes = require('./routes/bookRoutes');
 const dashboardRoutes = require("./routes/dashboardRoutes.js");
 
-const app = express();
+require('dotenv').config();
 
+const app = express();
 app.use(express.json());
 
-// SERVE FRONTEND FILES
+// Serve frontend files
 app.use(express.static("public"));
 
-// DASHBOARD API ROUTES
+// Dashboard API routes
 app.use("/dashboard", dashboardRoutes);
 
 const PORT = process.env.PORT || 3000;
@@ -19,6 +20,12 @@ const PORT = process.env.PORT || 3000;
 app.get('/', (req, res) => {
     res.send('LibSwap server is running');
 });
+
+// Authentication routes
+app.use('/api/auth', authRoutes);
+
+// Catalogue routes
+app.use('/api/books', bookRoutes);
 
 mongoose.connect(process.env.MONGODB_URI)
     .then(() => {
