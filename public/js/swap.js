@@ -1,13 +1,13 @@
 const userId = localStorage.getItem("userId");
 const token = localStorage.getItem("token");
 
-if (!userId || !token) {
-  window.location.href = "login.html";
-}
+// if (!userId || !token) {
+//   window.location.href = "login.html";
+// }
 
-document.getElementById("backBtn").addEventListener("click", () => {
-  window.location.href = "dashboard.html";
-});
+// document.getElementById("backBtn").addEventListener("click", () => {
+//   window.location.href = "dashboard.html";
+// });
 
 let selectedBookId = null;
 let selectedMyBookId = null;

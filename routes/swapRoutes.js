@@ -7,10 +7,10 @@ const router = express.Router();
 // Create Swap Request
 router.post("/request", async (req, res) => {
   try {
-    const { bookId, ownerId, requesterId, message } = req.body;
+    const { bookId, ownerId, requesterId, offeredBookId, message } = req.body;
 
     // Validate required fields
-    if (!bookId || !ownerId || !requesterId) {
+    if (!bookId || !ownerId || !requesterId || !offeredBookId) {
       return res.status(400).json({
         success: false,
         message: "Missing required fields"
@@ -54,6 +54,7 @@ router.post("/request", async (req, res) => {
       bookId,
       ownerId,
       requesterId,
+      offeredBookId,
       message
     });
 

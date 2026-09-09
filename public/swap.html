@@ -1,35 +1,61 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
   <meta charset="UTF-8">
-  <title>Swap Request</title>
-  <link rel="stylesheet" href="css/swap.css">
+  <title>LibSwap – Swap Request</title>
+
+  <!-- Dashboard global styles -->
+  <!-- <link rel="stylesheet" href="style.css?v=5"> -->
+
+  <!-- Swap-specific styles -->
+  <link rel="stylesheet" href="/public/css/swap.css?v=5">
 </head>
+
 <body>
 
-  <header>
-    <h1>Send Swap Request</h1>
-    <button id="backBtn">Back to Dashboard</button>
+  <!-- Header -->
+  <header class="header">
+    <div class="logo">LibSwap</div>
+    <div class="tagline">Smart Library Management & Book Swapping System</div>
   </header>
 
-  <main>
-    <section>
+  <!-- Sidebar -->
+  <nav class="sidebar">
+    <ul>
+      <li onclick="window.location.href='dashboard.html'">Your Info</li>
+      <li onclick="window.location.href='dashboard.html'">Borrowed Books</li>
+      <li onclick="window.location.href='dashboard.html'">Your Reservations</li>
+      <li class="active">Swap Requests</li>
+    </ul>
+  </nav>
+
+  <!-- Main Content -->
+  <main class="content">
+
+    <section class="swap-section">
       <h2>Select a Book to Request</h2>
       <div id="availableBooks"></div>
     </section>
 
-    <section>
+    <section class="swap-section">
       <h2>Your Books (to offer)</h2>
       <div id="myBooks"></div>
     </section>
 
-    <section>
+    <section class="swap-section">
       <h2>Send Request</h2>
-      <button id="sendRequestBtn" disabled>Send Swap Request</button>
+      <button id="sendRequestBtn">Send Swap Request</button>
       <p id="statusMsg"></p>
     </section>
+
   </main>
 
-  <script src="js/swap.js"></script>
+
+
+  <!-- JS -->
+  <script src="/public/js/swap.js?v=5"></script>
+
 </body>
+
 </html>
