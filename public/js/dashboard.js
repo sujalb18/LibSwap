@@ -4,9 +4,9 @@ const token = localStorage.getItem("token");
 const fullName = localStorage.getItem("fullName");
 
 // If not logged in, redirect to login
-if (!userId || !token) {
-  window.location.href = "login.html";
-}
+// if (!userId || !token) {
+//   window.location.href = "login.html";
+// }
 
 // Show welcome text
 const welcomeText = document.getElementById("welcomeText");

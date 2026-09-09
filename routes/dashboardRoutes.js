@@ -1,6 +1,6 @@
-import express from "express";
-import Book from "../models/Book.js";
-import SwapRequest from "../models/SwapRequest.js";
+const express = require("express");
+const Book = require("../models/Book.js");
+const SwapRequest = require("../models/SwapRequest.js");
 
 const router = express.Router();
 
@@ -31,8 +31,6 @@ router.get("/my-books/:userId", async (req, res) => {
     });
   }
 });
-
-
 
 // Get swap requests received by the logged-in user
 router.get("/swap-received/:userId", async (req, res) => {
@@ -94,6 +92,4 @@ router.get("/swap-sent/:userId", async (req, res) => {
   }
 });
 
-
-
-export default router;
+module.exports = router;
