@@ -1,6 +1,6 @@
-import express from "express";
-import SwapRequest from "../models/SwapRequest.js";
-import Book from "../models/Book.js";
+const express = require("express");
+const SwapRequest = require("../models/SwapRequest");
+const Book = require("../models/Book");
 
 const router = express.Router();
 
@@ -75,4 +75,4 @@ router.post("/request", async (req, res) => {
   }
 });
 
-export default router;
+module.exports = router;
