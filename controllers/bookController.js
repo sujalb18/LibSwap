@@ -36,7 +36,42 @@ const getBooks = async (req, res) => {
     }
 };
 
+
+// This function allows a user to add a new book to the catalogue, eventually will extend to admin as well
+const addBook = async (req, res) => {
+    try {
+        const { title, author, genre } = req.body;
+
+        // This part makes sure that required fields are present
+        if (!title || !author) {
+            return res.status(400).json({ message: 'Title and Author are required.' });
+        }
+
+        // Create a new book based on the schema
+        const newBook = new Book({
+            title,
+            author,
+            genre,
+            available: true // By default, newly added books are available
+        });
+
+        // Save new book to MongoDB
+        const savedBook = await newBook.save();
+
+        // Send a success response back to the frontend
+        res.status(201).json(savedBook);
+
+    } catch (error) {
+        res.status(500).json({
+            message: 'Unable to add the book',
+            error: error.message
+        });
+    }
+};
+
+
 // Exporting the function so our route file can use it
 module.exports = {
-    getBooks
+    getBooks,
+    addBook
 };
