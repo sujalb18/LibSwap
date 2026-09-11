@@ -1,0 +1,31 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Delete a Book</title>
+    <link rel="stylesheet" href="css/delete-personal-book.css">
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>Delete Books</h1>
+            <nav>
+                <a href="catalogue.html" class="nav-link">Back to Catalogue</a>
+                <a href="add-book.html" class="nav-link">Add a Book</a>
+            </nav>
+        </header>
+
+        <main>
+            <p class="warning-text">Warning: Deleting a book is permanent and cannot be undone.</p>
+            <div id="status-message"></div>
+            
+            <ul id="delete-list" class="delete-list">
+                <li>Loading books...</li>
+            </ul>
+        </main>
+    </div>
+
+    <script src="js/delete-personal-book.js"></script>
+</body>
+</html>
