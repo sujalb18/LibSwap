@@ -39,10 +39,29 @@ const getBooks = async (req, res) => {
 // Add a new library book
 const createBook = async (req, res) => {
     try {
+        const title = req.body.title?.trim();
+        const author = req.body.author?.trim();
+        const genre = req.body.genre?.trim();
+
+        if (!title || !author) {
+            return res.status(400).json({
+                message: 'Title and author are required'
+            });
+        }
+
+        if (
+            req.body.available !== undefined &&
+            typeof req.body.available !== 'boolean'
+        ) {
+            return res.status(400).json({
+                message: 'Availability must be true or false'
+            });
+        }
+
         const book = new Book({
-            title: req.body.title,
-            author: req.body.author,
-            genre: req.body.genre,
+            title,
+            author,
+            genre,
             available: req.body.available
         });
 
@@ -64,12 +83,31 @@ const createBook = async (req, res) => {
 // Update an existing library book
 const updateBook = async (req, res) => {
     try {
+        const title = req.body.title?.trim();
+        const author = req.body.author?.trim();
+        const genre = req.body.genre?.trim();
+
+        if (!title || !author) {
+            return res.status(400).json({
+                message: 'Title and author are required'
+            });
+        }
+
+        if (
+            req.body.available !== undefined &&
+            typeof req.body.available !== 'boolean'
+        ) {
+            return res.status(400).json({
+                message: 'Availability must be true or false'
+            });
+        }
+
         const updatedBook = await Book.findByIdAndUpdate(
             req.params.id,
             {
-                title: req.body.title,
-                author: req.body.author,
-                genre: req.body.genre,
+                title,
+                author,
+                genre,
                 available: req.body.available
             },
             {
