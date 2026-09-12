@@ -1,0 +1,133 @@
+/* Global Layout */
+body {
+  font-family: Arial, sans-serif;
+  margin: 0;
+  background: #eef1f5;
+  display: flex;
+}
+
+/* Header */
+.header {
+  width: 100%;
+  padding: 20px;
+  background: #1e3d59;
+  color: white;
+  text-align: center;
+  position: fixed;
+  top: 0;
+  left: 0;
+  z-index: 10;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.2);
+}
+
+.logo {
+  font-size: 34px;
+  font-weight: bold;
+  letter-spacing: 2px;
+  animation: fadeInDown 0.6s ease;
+}
+
+.tagline {
+  font-size: 14px;
+  opacity: 0.85;
+  margin-top: 5px;
+  animation: fadeInUp 0.6s ease;
+}
+
+/* Sidebar */
+.sidebar {
+  width: 230px;
+  background: #1e3d59;
+  height: 100vh;
+  padding-top: 120px;
+  position: fixed;
+  left: 0;
+  top: 0;
+  color: white;
+  box-shadow: 2px 0 8px rgba(0,0,0,0.2);
+}
+
+.sidebar ul {
+  list-style: none;
+  padding: 0;
+}
+
+.sidebar li {
+  padding: 15px;
+  cursor: pointer;
+  border-bottom: 1px solid rgba(255,255,255,0.1);
+  transition: background 0.3s ease, padding-left 0.3s ease;
+}
+
+.sidebar li:hover {
+  background: #16324f;
+  padding-left: 25px;
+}
+
+/* Main Content */
+.content {
+  margin-left: 250px;
+  padding: 140px 40px 40px;
+  width: 100%;
+}
+
+/* Sections */
+.section {
+  display: none;
+  background: white;
+  padding: 25px;
+  border-radius: 10px;
+  box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+  animation: fadeIn 0.4s ease;
+}
+
+.section.active {
+  display: block;
+}
+
+/* Buttons */
+.action-btn {
+  background: #1e3d59;
+  color: white;
+  padding: 10px 18px;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+  margin-bottom: 15px;
+  transition: background 0.3s ease, transform 0.2s ease;
+}
+
+.action-btn:hover {
+  background: #16324f;
+  transform: scale(1.05);
+}
+
+/* Footer */
+.footer {
+  position: fixed;
+  bottom: 0;
+  left: 250px;
+  width: calc(100% - 250px);
+  background: #1e3d59;
+  color: white;
+  text-align: center;
+  padding: 10px;
+  font-size: 13px;
+  opacity: 0.9;
+}
+
+/* Animations */
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(10px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes fadeInDown {
+  from { opacity: 0; transform: translateY(-10px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes fadeInUp {
+  from { opacity: 0; transform: translateY(10px); }
+  to { opacity: 1; transform: translateY(0); }
+}

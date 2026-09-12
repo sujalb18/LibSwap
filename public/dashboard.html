@@ -1,0 +1,73 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <title>LibSwap Dashboard</title>
+  <link rel="stylesheet" href="/public/css/dashboard.css">
+</head>
+
+<body>
+
+  <!-- Header / Logo -->
+  <header class="header">
+    <div class="logo">LibSwap</div>
+    <div class="tagline">Smart Library Management & Book Swapping System</div>
+  </header>
+
+  <!-- Sidebar Navigation -->
+  <nav class="sidebar">
+    <ul>
+      <li data-section="student-info">Your Info</li>
+      <li data-section="borrowed-books">Borrowed Books</li>
+      <li data-section="reservations">Your Reservations</li>
+      <li data-section="swap-requests">Swap Requests</li>
+    </ul>
+  </nav>
+
+  <!-- Main Content -->
+  <main class="content">
+
+    <section id="student-info" class="section active">
+      <h2>Your Info</h2>
+      <div id="student-details"></div>
+    </section>
+
+    <section id="borrowed-books" class="section">
+      <h2>Borrowed Books</h2>
+      <button class="action-btn">Borrow a Book</button>
+      <ul id="borrowed-list"></ul>
+    </section>
+
+    <section id="reservations" class="section">
+      <h2>Your Reservations</h2>
+      <button class="action-btn">Reserve a Book</button>
+      <ul id="reservation-list"></ul>
+    </section>
+
+    <section id="swap-requests" class="section">
+      <h2>Swap Requests</h2>
+      <button class="action-btn">Request a Swap</button>
+      <ul id="swap-list"></ul>
+    </section>
+
+  </main>
+
+
+
+  <script src="/public/js/dashboard.js"></script>
+
+  <!-- Sidebar Navigation Logic -->
+  <script>
+    document.querySelectorAll(".sidebar li").forEach(item => {
+      item.addEventListener("click", () => {
+        document.querySelectorAll(".section").forEach(sec => sec.classList.remove("active"));
+        const target = item.getAttribute("data-section");
+        document.getElementById(target).classList.add("active");
+      });
+    });
+  </script>
+
+</body>
+
+</html>
