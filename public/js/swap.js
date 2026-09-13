@@ -5,9 +5,9 @@ const token = localStorage.getItem("token");
 //   window.location.href = "login.html";
 // }
 
-// document.getElementById("backBtn").addEventListener("click", () => {
-//   window.location.href = "dashboard.html";
-// });
+document.getElementById("backBtn").addEventListener("click", () => {
+  window.location.href = "dashboard.html";   // FIXED
+});
 
 let selectedBookId = null;
 let selectedMyBookId = null;

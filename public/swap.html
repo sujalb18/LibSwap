@@ -21,9 +21,10 @@
 
   <nav class="sidebar">
     <ul>
-      <li onclick="window.location.href='dashboard.html'">Your Info</li>
-      <li onclick="window.location.href='dashboard.html'">Borrowed Books</li>
-      <li onclick="window.location.href='dashboard.html'">Your Reservations</li>
+      <!-- FIXED: Correct dashboard file name -->
+      <li onclick="window.location.href='index.html'">Your Info</li>
+      <li onclick="window.location.href='index.html'">Borrowed Books</li>
+      <li onclick="window.location.href='index.html'">Your Reservations</li>
       <li class="active">Swap Requests</li>
     </ul>
   </nav>
@@ -44,10 +45,14 @@
       <h2>Send Request</h2>
       <button id="sendRequestBtn">Send Swap Request</button>
       <p id="statusMsg"></p>
+
+      <!-- Optional Back Button -->
+      <button id="backBtn" class="action-btn">Back to Dashboard</button>
     </section>
 
   </main>
 
+  <!-- FIXED: Correct JS path -->
   <script src="/public/js/swap.js"></script>
 
 </body>
