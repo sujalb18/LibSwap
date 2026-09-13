@@ -24,7 +24,7 @@ app.use('/api/auth', authRoutes);
 // Catalogue routes for US02
 app.use('/api/books', bookRoutes);
 
-mongoose.connect(process.env.MONGODB_URI)
+if (require.main === module) mongoose.connect(process.env.MONGODB_URI)
     .then(() => {
         console.log('Connected to MongoDB');
 
@@ -35,3 +35,5 @@ mongoose.connect(process.env.MONGODB_URI)
     .catch((error) => {
         console.error('MongoDB connection failed:', error.message);
     });
+
+module.exports = app;
