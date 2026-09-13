@@ -4,7 +4,8 @@
   "description": "Library Management and Student Book Swapping System",
   "main": "server.js",
   "scripts": {
-    "start": "node server.js"
+    "start": "node server.js",
+    "test": "node --test tests/circulation.test.js"
   },
   "repository": {
     "type": "git",
