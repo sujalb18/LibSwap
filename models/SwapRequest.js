@@ -1,4 +1,4 @@
-import mongoose from "mongoose";
+const mongoose = require("mongoose");
 
 const swapRequestSchema = new mongoose.Schema(
   {
@@ -17,6 +17,11 @@ const swapRequestSchema = new mongoose.Schema(
       ref: "User",
       required: true
     },
+    offeredBookId: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "Book",
+      required: true
+    },
     message: {
       type: String,
       default: ""
@@ -30,4 +35,4 @@ const swapRequestSchema = new mongoose.Schema(
   { timestamps: true }
 );
 
-export default mongoose.model("SwapRequest", swapRequestSchema);
+module.exports = mongoose.model("SwapRequest", swapRequestSchema);
