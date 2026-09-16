@@ -1,6 +1,11 @@
 const request = require('supertest');
 const mongoose = require('mongoose');
+const jwt = require('jsonwebtoken');
 const { MongoMemoryServer } = require('mongodb-memory-server');
+
+// Use a test-only JWT secret.
+// This is NOT the real secret from .env.
+process.env.JWT_SECRET = 'libswap-test-secret';
 
 const app = require('../app');
 const Book = require('../models/Book');
@@ -11,11 +16,11 @@ jest.setTimeout(120000);
 let mongoServer;
 let databaseReady = false;
 
+let staffToken;
+let studentToken;
+
 // Start a temporary MongoDB database before the tests run
 beforeAll(async () => {
-
-    // mongodb-memory-server normally only waits 10 seconds
-    // for MongoDB to start, so we increase that for Windows
     mongoServer = await MongoMemoryServer.create({
         instance: {
             launchTimeout: 60000
@@ -27,10 +32,33 @@ beforeAll(async () => {
     await mongoose.connect(mongoUri);
 
     databaseReady = true;
+
+    // Create a fake staff JWT for protected API testing
+    staffToken = jwt.sign(
+        {
+            userId: new mongoose.Types.ObjectId().toString(),
+            role: 'staff'
+        },
+        process.env.JWT_SECRET,
+        {
+            expiresIn: '1h'
+        }
+    );
+
+    // Create a fake student JWT
+    studentToken = jwt.sign(
+        {
+            userId: new mongoose.Types.ObjectId().toString(),
+            role: 'student'
+        },
+        process.env.JWT_SECRET,
+        {
+            expiresIn: '1h'
+        }
+    );
 });
 
 // Remove test books after every test
-// Only do this if the temporary database successfully started
 afterEach(async () => {
     if (
         databaseReady &&
@@ -40,9 +68,8 @@ afterEach(async () => {
     }
 });
 
-// Close the temporary database safely after all tests finish
+// Close the temporary database after all tests finish
 afterAll(async () => {
-
     if (mongoose.connection.readyState !== 0) {
         await mongoose.disconnect();
     }
@@ -97,7 +124,9 @@ describe('Book API automated tests', () => {
             .expect(200);
 
         expect(response.body).toHaveLength(1);
-        expect(response.body[0].title).toBe('Harry Potter');
+        expect(response.body[0].title).toBe(
+            'Harry Potter'
+        );
     });
 
     test('GET /api/books can search by author', async () => {
@@ -125,7 +154,46 @@ describe('Book API automated tests', () => {
         );
     });
 
-    test('POST /api/books creates a valid book', async () => {
+
+    // POST authorization and validation tests
+
+    test('POST /api/books rejects a request without a token', async () => {
+        const response = await request(app)
+            .post('/api/books')
+            .send({
+                title: 'Unauthorized Book',
+                author: 'Test Author',
+                genre: 'Testing',
+                available: true
+            })
+            .expect(401);
+
+        expect(response.body.message).toBe(
+            'Authentication token required'
+        );
+    });
+
+    test('POST /api/books rejects a student user', async () => {
+        const response = await request(app)
+            .post('/api/books')
+            .set(
+                'Authorization',
+                `Bearer ${studentToken}`
+            )
+            .send({
+                title: 'Student Book',
+                author: 'Test Author',
+                genre: 'Testing',
+                available: true
+            })
+            .expect(403);
+
+        expect(response.body.message).toBe(
+            'Staff access required'
+        );
+    });
+
+    test('POST /api/books allows staff to create a valid book', async () => {
         const newBook = {
             title: 'Automated Test Book',
             author: 'Test Author',
@@ -135,6 +203,10 @@ describe('Book API automated tests', () => {
 
         const response = await request(app)
             .post('/api/books')
+            .set(
+                'Authorization',
+                `Bearer ${staffToken}`
+            )
             .send(newBook)
             .expect(201);
 
@@ -151,12 +223,18 @@ describe('Book API automated tests', () => {
         });
 
         expect(savedBook).not.toBeNull();
-        expect(savedBook.author).toBe('Test Author');
+        expect(savedBook.author).toBe(
+            'Test Author'
+        );
     });
 
     test('POST /api/books rejects a book without a title', async () => {
         const response = await request(app)
             .post('/api/books')
+            .set(
+                'Authorization',
+                `Bearer ${staffToken}`
+            )
             .send({
                 author: 'Test Author',
                 genre: 'Testing',
@@ -172,6 +250,10 @@ describe('Book API automated tests', () => {
     test('POST /api/books rejects invalid availability', async () => {
         const response = await request(app)
             .post('/api/books')
+            .set(
+                'Authorization',
+                `Bearer ${staffToken}`
+            )
             .send({
                 title: 'Invalid Availability Book',
                 author: 'Test Author',
@@ -185,7 +267,58 @@ describe('Book API automated tests', () => {
         );
     });
 
-    test('PUT /api/books/:id updates an existing book', async () => {
+   
+    // PUT authorization and update tests
+  
+    test('PUT /api/books/:id rejects a request without a token', async () => {
+        const book = await Book.create({
+            title: 'Protected Book',
+            author: 'Test Author',
+            genre: 'Testing'
+        });
+
+        const response = await request(app)
+            .put(`/api/books/${book._id}`)
+            .send({
+                title: 'Changed Book',
+                author: 'Test Author',
+                genre: 'Testing',
+                available: true
+            })
+            .expect(401);
+
+        expect(response.body.message).toBe(
+            'Authentication token required'
+        );
+    });
+
+    test('PUT /api/books/:id rejects a student user', async () => {
+        const book = await Book.create({
+            title: 'Protected Book',
+            author: 'Test Author',
+            genre: 'Testing'
+        });
+
+        const response = await request(app)
+            .put(`/api/books/${book._id}`)
+            .set(
+                'Authorization',
+                `Bearer ${studentToken}`
+            )
+            .send({
+                title: 'Changed Book',
+                author: 'Test Author',
+                genre: 'Testing',
+                available: true
+            })
+            .expect(403);
+
+        expect(response.body.message).toBe(
+            'Staff access required'
+        );
+    });
+
+    test('PUT /api/books/:id allows staff to update an existing book', async () => {
         const book = await Book.create({
             title: 'Original Title',
             author: 'Original Author',
@@ -195,6 +328,10 @@ describe('Book API automated tests', () => {
 
         const response = await request(app)
             .put(`/api/books/${book._id}`)
+            .set(
+                'Authorization',
+                `Bearer ${staffToken}`
+            )
             .send({
                 title: 'Updated Title',
                 author: 'Updated Author',
@@ -213,9 +350,13 @@ describe('Book API automated tests', () => {
 
         expect(response.body.book.available).toBe(false);
 
-        const updatedBook = await Book.findById(book._id);
+        const updatedBook =
+            await Book.findById(book._id);
 
-        expect(updatedBook.title).toBe('Updated Title');
+        expect(updatedBook.title).toBe(
+            'Updated Title'
+        );
+
         expect(updatedBook.available).toBe(false);
     });
 
@@ -225,6 +366,10 @@ describe('Book API automated tests', () => {
 
         const response = await request(app)
             .put(`/api/books/${missingBookId}`)
+            .set(
+                'Authorization',
+                `Bearer ${staffToken}`
+            )
             .send({
                 title: 'Missing Book',
                 author: 'Test Author',
@@ -241,6 +386,10 @@ describe('Book API automated tests', () => {
     test('PUT /api/books/:id rejects an invalid book ID', async () => {
         const response = await request(app)
             .put('/api/books/not-a-valid-id')
+            .set(
+                'Authorization',
+                `Bearer ${staffToken}`
+            )
             .send({
                 title: 'Test Book',
                 author: 'Test Author',
@@ -254,7 +403,46 @@ describe('Book API automated tests', () => {
         );
     });
 
-    test('DELETE /api/books/:id deletes an existing book', async () => {
+    
+    // DELETE authorization and deletion tests
+   
+    test('DELETE /api/books/:id rejects a request without a token', async () => {
+        const book = await Book.create({
+            title: 'Protected Delete Book',
+            author: 'Test Author',
+            genre: 'Testing'
+        });
+
+        const response = await request(app)
+            .delete(`/api/books/${book._id}`)
+            .expect(401);
+
+        expect(response.body.message).toBe(
+            'Authentication token required'
+        );
+    });
+
+    test('DELETE /api/books/:id rejects a student user', async () => {
+        const book = await Book.create({
+            title: 'Protected Delete Book',
+            author: 'Test Author',
+            genre: 'Testing'
+        });
+
+        const response = await request(app)
+            .delete(`/api/books/${book._id}`)
+            .set(
+                'Authorization',
+                `Bearer ${studentToken}`
+            )
+            .expect(403);
+
+        expect(response.body.message).toBe(
+            'Staff access required'
+        );
+    });
+
+    test('DELETE /api/books/:id allows staff to delete an existing book', async () => {
         const book = await Book.create({
             title: 'Book To Delete',
             author: 'Test Author',
@@ -264,13 +452,18 @@ describe('Book API automated tests', () => {
 
         const response = await request(app)
             .delete(`/api/books/${book._id}`)
+            .set(
+                'Authorization',
+                `Bearer ${staffToken}`
+            )
             .expect(200);
 
         expect(response.body.message).toBe(
             'Book deleted successfully'
         );
 
-        const deletedBook = await Book.findById(book._id);
+        const deletedBook =
+            await Book.findById(book._id);
 
         expect(deletedBook).toBeNull();
     });
@@ -281,6 +474,10 @@ describe('Book API automated tests', () => {
 
         const response = await request(app)
             .delete(`/api/books/${missingBookId}`)
+            .set(
+                'Authorization',
+                `Bearer ${staffToken}`
+            )
             .expect(404);
 
         expect(response.body.message).toBe(
@@ -291,6 +488,10 @@ describe('Book API automated tests', () => {
     test('DELETE /api/books/:id rejects an invalid book ID', async () => {
         const response = await request(app)
             .delete('/api/books/not-a-valid-id')
+            .set(
+                'Authorization',
+                `Bearer ${staffToken}`
+            )
             .expect(400);
 
         expect(response.body.message).toBe(

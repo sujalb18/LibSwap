@@ -14,6 +14,24 @@ const bookTableBody = document.getElementById('bookTableBody');
 // null means we are adding a new book
 let editingBookId = null;
 
+// Returns the JWT saved when the user logged in
+const getToken = () => {
+    return localStorage.getItem('token');
+};
+
+// Creates the Authorization header used by protected routes
+const getAuthHeaders = () => {
+    const token = getToken();
+
+    if (!token) {
+        return {};
+    }
+
+    return {
+        Authorization: `Bearer ${token}`
+    };
+};
+
 // Shows a message to the admin
 const showMessage = (text, isError = false) => {
     adminMessage.textContent = text;
@@ -22,6 +40,78 @@ const showMessage = (text, isError = false) => {
         adminMessage.className = 'error-message';
     } else {
         adminMessage.className = 'success-message';
+    }
+};
+
+// Disables the management form when the user is not staff
+const disableManagement = () => {
+    titleInput.disabled = true;
+    authorInput.disabled = true;
+    genreInput.disabled = true;
+    availableInput.disabled = true;
+    saveButton.disabled = true;
+    cancelButton.disabled = true;
+};
+
+// Checks whether the logged-in user is staff
+const checkStaffAccess = async () => {
+    const token = getToken();
+
+    if (!token) {
+        disableManagement();
+
+        showMessage(
+            'Please log in with a staff account to manage library books.',
+            true
+        );
+
+        return false;
+    }
+
+    try {
+        const response = await fetch('/api/auth/me', {
+            headers: {
+                Authorization: `Bearer ${token}`
+            }
+        });
+
+        if (!response.ok) {
+            disableManagement();
+
+            showMessage(
+                'Your login session is invalid or has expired.',
+                true
+            );
+
+            return false;
+        }
+
+        const result = await response.json();
+
+        if (!result.user || result.user.role !== 'staff') {
+            disableManagement();
+
+            showMessage(
+                'Staff access is required to manage library books.',
+                true
+            );
+
+            return false;
+        }
+
+        return true;
+
+    } catch (error) {
+        disableManagement();
+
+        showMessage(
+            'Unable to verify staff access.',
+            true
+        );
+
+        console.error(error);
+
+        return false;
     }
 };
 
@@ -79,6 +169,17 @@ const createBookRow = (book) => {
     deleteButton.textContent = 'Delete';
 
     deleteButton.addEventListener('click', async () => {
+        const token = getToken();
+
+        if (!token) {
+            showMessage(
+                'Staff login is required to delete books.',
+                true
+            );
+
+            return;
+        }
+
         const confirmed = confirm(
             `Are you sure you want to delete "${book.title}"?`
         );
@@ -89,7 +190,8 @@ const createBookRow = (book) => {
 
         try {
             const response = await fetch(`/api/books/${book._id}`, {
-                method: 'DELETE'
+                method: 'DELETE',
+                headers: getAuthHeaders()
             });
 
             const result = await response.json();
@@ -173,6 +275,17 @@ bookForm.addEventListener('submit', async (event) => {
 
     adminMessage.textContent = '';
 
+    const token = getToken();
+
+    if (!token) {
+        showMessage(
+            'Staff login is required to manage books.',
+            true
+        );
+
+        return;
+    }
+
     const bookData = {
         title: titleInput.value.trim(),
         author: authorInput.value.trim(),
@@ -193,7 +306,8 @@ bookForm.addEventListener('submit', async (event) => {
         const response = await fetch(url, {
             method,
             headers: {
-                'Content-Type': 'application/json'
+                'Content-Type': 'application/json',
+                ...getAuthHeaders()
             },
             body: JSON.stringify(bookData)
         });
@@ -228,5 +342,10 @@ cancelButton.addEventListener('click', () => {
     adminMessage.textContent = '';
 });
 
-// Load all books when the admin page first opens
-loadBooks();
+// Check authorization and load books when the admin page opens
+const initialiseAdminPage = async () => {
+    await checkStaffAccess();
+    await loadBooks();
+};
+
+initialiseAdminPage();

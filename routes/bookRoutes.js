@@ -8,17 +8,34 @@ const {
     deleteBook
 } = require('../controllers/bookController');
 
-// This route gets all books or searches books using ?search=
+const authMiddleware = require('../middleware/authMiddleware');
+const staffOnly = require('../middleware/staffOnly');
+
+// Anyone can browse or search the library catalogue
 router.get('/', getBooks);
 
-// Add a new library book
-router.post('/', createBook);
+// Only authenticated staff can add library books
+router.post(
+    '/',
+    authMiddleware,
+    staffOnly,
+    createBook
+);
 
-// Update an existing library book
-router.put('/:id', updateBook);
+// Only authenticated staff can update library books
+router.put(
+    '/:id',
+    authMiddleware,
+    staffOnly,
+    updateBook
+);
 
-// Delete an existing library book
-router.delete('/:id', deleteBook);
+// Only authenticated staff can delete library books
+router.delete(
+    '/:id',
+    authMiddleware,
+    staffOnly,
+    deleteBook
+);
 
-// Exporting the router so server.js can use it
 module.exports = router;
