@@ -36,6 +36,32 @@ const getBooks = async (req, res) => {
     }
 };
 
+//Function to delete a book
+const deleteBook = async (req, res) => {
+    try {
+        // Extract the ID from the request URL
+        const bookId = req.params.id;
+
+        // Ask MongoDB to find the book by its unique ID and delete it
+        const deletedBook = await Book.findByIdAndDelete(bookId);
+
+        // If no book matched that ID, return a 404 Not Found error
+        if (!deletedBook) {
+            return res.status(404).json({ message: 'Book not found.' });
+        }
+
+        // If successful, send 200 OK status
+        res.status(200).json({ message: 'Book deleted successfully.' });
+
+    } catch (error) {
+        // If the ID format is invalid, Mongoose throws an error
+        res.status(400).json({ 
+            message: 'Unable to delete the book. Invalid ID format.',
+            error: error.message 
+        });
+    }
+};
+
 
 // This function allows a user to add a new book to the catalogue, eventually will extend to admin as well
 const addBook = async (req, res) => {
@@ -73,5 +99,6 @@ const addBook = async (req, res) => {
 // Exporting the function so our route file can use it
 module.exports = {
     getBooks,
-    addBook
+    addBook,
+    deleteBook
 };
