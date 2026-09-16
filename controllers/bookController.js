@@ -36,69 +36,180 @@ const getBooks = async (req, res) => {
     }
 };
 
-//Function to delete a book
-const deleteBook = async (req, res) => {
+// Add a new library book
+const createBook = async (req, res) => {
     try {
-        // Extract the ID from the request URL
-        const bookId = req.params.id;
+        const title = req.body.title?.trim();
+        const author = req.body.author?.trim();
+        const genre = req.body.genre?.trim();
 
-        // Ask MongoDB to find the book by its unique ID and delete it
-        const deletedBook = await Book.findByIdAndDelete(bookId);
-
-        // If no book matched that ID, return a 404 Not Found error
-        if (!deletedBook) {
-            return res.status(404).json({ message: 'Book not found.' });
-        }
-
-        // If successful, send 200 OK status
-        res.status(200).json({ message: 'Book deleted successfully.' });
-
-    } catch (error) {
-        // If the ID format is invalid, Mongoose throws an error
-        res.status(400).json({ 
-            message: 'Unable to delete the book. Invalid ID format.',
-            error: error.message 
-        });
-    }
-};
-
-
-// This function allows a user to add a new book to the catalogue, eventually will extend to admin as well
-const addBook = async (req, res) => {
-    try {
-        const { title, author, genre } = req.body;
-
-        // This part makes sure that required fields are present
+        // Title and author are required
         if (!title || !author) {
-            return res.status(400).json({ message: 'Title and Author are required.' });
+            return res.status(400).json({
+                message: 'Title and author are required'
+            });
         }
 
-        // Create a new book based on the schema
-        const newBook = new Book({
+        // If availability is provided, it must be true or false
+        if (
+            req.body.available !== undefined &&
+            typeof req.body.available !== 'boolean'
+        ) {
+            return res.status(400).json({
+                message: 'Availability must be true or false'
+            });
+        }
+
+        const book = new Book({
             title,
             author,
             genre,
-            available: true // By default, newly added books are available
+            available: req.body.available
         });
 
-        // Save new book to MongoDB
-        const savedBook = await newBook.save();
+        const savedBook = await book.save();
 
-        // Send a success response back to the frontend
-        res.status(201).json(savedBook);
+        // Send a real-time event to connected catalogue pages
+        const io = req.app.get('io');
+
+        if (io) {
+            io.emit('booksChanged', {
+                action: 'created',
+                book: savedBook
+            });
+        }
+
+        res.status(201).json({
+            message: 'Book added successfully',
+            book: savedBook
+        });
 
     } catch (error) {
         res.status(500).json({
-            message: 'Unable to add the book',
+            message: 'Unable to add book',
             error: error.message
         });
     }
 };
 
+// Update an existing library book
+const updateBook = async (req, res) => {
+    try {
+        const title = req.body.title?.trim();
+        const author = req.body.author?.trim();
+        const genre = req.body.genre?.trim();
 
-// Exporting the function so our route file can use it
+        // Title and author are required
+        if (!title || !author) {
+            return res.status(400).json({
+                message: 'Title and author are required'
+            });
+        }
+
+        // If availability is provided, it must be true or false
+        if (
+            req.body.available !== undefined &&
+            typeof req.body.available !== 'boolean'
+        ) {
+            return res.status(400).json({
+                message: 'Availability must be true or false'
+            });
+        }
+
+        const updatedBook = await Book.findByIdAndUpdate(
+            req.params.id,
+            {
+                title,
+                author,
+                genre,
+                available: req.body.available
+            },
+            {
+                returnDocument: 'after',
+                runValidators: true
+            }
+        );
+
+        if (!updatedBook) {
+            return res.status(404).json({
+                message: 'Book not found'
+            });
+        }
+
+        // Send a real-time event to connected catalogue pages
+        const io = req.app.get('io');
+
+        if (io) {
+            io.emit('booksChanged', {
+                action: 'updated',
+                book: updatedBook
+            });
+        }
+
+        res.status(200).json({
+            message: 'Book updated successfully',
+            book: updatedBook
+        });
+
+    } catch (error) {
+        // Invalid MongoDB ID format
+        if (error.name === 'CastError') {
+            return res.status(400).json({
+                message: 'Invalid book ID'
+            });
+        }
+
+        res.status(500).json({
+            message: 'Unable to update book',
+            error: error.message
+        });
+    }
+};
+
+// Delete an existing library book
+const deleteBook = async (req, res) => {
+    try {
+        const deletedBook = await Book.findByIdAndDelete(req.params.id);
+
+        if (!deletedBook) {
+            return res.status(404).json({
+                message: 'Book not found'
+            });
+        }
+
+        // Send a real-time event to connected catalogue pages
+        const io = req.app.get('io');
+
+        if (io) {
+            io.emit('booksChanged', {
+                action: 'deleted',
+                bookId: deletedBook._id
+            });
+        }
+
+        res.status(200).json({
+            message: 'Book deleted successfully'
+        });
+
+    } catch (error) {
+        // Invalid MongoDB ID format
+        if (error.name === 'CastError') {
+            return res.status(400).json({
+                message: 'Invalid book ID'
+            });
+        }
+
+        res.status(500).json({
+            message: 'Unable to delete book',
+            error: error.message
+        });
+    }
+};
+
+// Exporting the functions so our route file can use them
 module.exports = {
     getBooks,
-    addBook,
+    createBook,
+    updateBook,
     deleteBook
 };

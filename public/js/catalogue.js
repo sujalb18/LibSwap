@@ -8,6 +8,9 @@ const genreFilter = document.getElementById('genreFilter');
 const availabilityFilter = document.getElementById('availabilityFilter');
 const sortSelect = document.getElementById('sortSelect');
 
+// Connect this catalogue page to Socket.IO
+const socket = io();
+
 // Stores the books returned by the backend
 let currentBooks = [];
 
@@ -204,6 +207,15 @@ searchInput.addEventListener('keypress', (event) => {
 genreFilter.addEventListener('change', applyFiltersAndSorting);
 availabilityFilter.addEventListener('change', applyFiltersAndSorting);
 sortSelect.addEventListener('change', applyFiltersAndSorting);
+
+// Listen for real-time book changes from the server
+socket.on('booksChanged', () => {
+    // Keep the current search term when refreshing the catalogue
+    const searchTerm = searchInput.value.trim();
+
+    // Reload the catalogue automatically without refreshing the browser
+    loadBooks(searchTerm);
+});
 
 // Load all books when the page first opens
 loadBooks();
