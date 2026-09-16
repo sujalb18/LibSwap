@@ -3,6 +3,7 @@ const mongoose = require('mongoose');
 const authRoutes = require('./routes/authRoutes');
 const bookRoutes = require('./routes/bookRoutes');
 const swapRoutes = require('./routes/swapRoutes');
+const dashboardRoutes = require("./routes/dashboardRoutes");
 
 require('dotenv').config();
 
@@ -13,16 +14,20 @@ app.use(express.json());
 app.use(express.static('public'));
 
 // Routes
+app.get('/', (req, res) => {
+    res.send('LibSwap server is running');
+});
+
 app.use('/api/auth', authRoutes);
 app.use('/api/books', bookRoutes);
 app.use('/api/swap', swapRoutes);
+app.use('/dashboard', dashboardRoutes);
 
 const PORT = process.env.PORT || 3000;
 
 mongoose.connect(process.env.MONGODB_URI)
     .then(() => {
         console.log('Connected to MongoDB');
-
         app.listen(PORT, () => {
             console.log(`Server is running on http://localhost:${PORT}`);
         });

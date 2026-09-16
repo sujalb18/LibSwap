@@ -1,0 +1,104 @@
+/* Basic page styling to match the catalogue */
+body {
+    margin: 0;
+    font-family: Arial, sans-serif;
+    background-color: #f4f6f8;
+    color: #222;
+}
+
+header {
+    text-align: center;
+    padding: 30px 20px;
+    background-color: #1f4e79;
+    color: white;
+}
+
+header h1 {
+    margin-bottom: 8px;
+}
+
+main {
+    max-width: 600px;
+    margin: 40px auto;
+    padding: 0 20px;
+}
+
+/* Styling the form container */
+.form-container {
+    background-color: white;
+    padding: 30px;
+    border-radius: 8px;
+    border: 1px solid #ddd;
+    box-shadow: 0 4px 6px rgba(0,0,0,0.05);
+}
+
+.form-group {
+    margin-bottom: 20px;
+}
+
+.form-group label {
+    display: block;
+    margin-bottom: 8px;
+    font-weight: bold;
+}
+
+.form-group input {
+    width: 100%;
+    padding: 10px;
+    border: 1px solid #ccc;
+    border-radius: 5px;
+    font-size: 16px;
+    box-sizing: border-box; 
+}
+
+/* Button and link layout */
+.button-group {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-top: 25px;
+}
+
+#submitButton {
+    padding: 12px 24px;
+    border: none;
+    border-radius: 5px;
+    background-color: #1f4e79;
+    color: white;
+    font-size: 16px;
+    cursor: pointer;
+    font-weight: bold;
+}
+
+#submitButton:hover {
+    background-color: #163a5c;
+}
+
+#submitButton:disabled {
+    background-color: #999;
+    cursor: not-allowed;
+}
+
+.back-link {
+    color: #1f4e79;
+    text-decoration: none;
+    font-weight: bold;
+}
+
+.back-link:hover {
+    text-decoration: underline;
+}
+
+/* Styling for success/error messages */
+.message {
+    font-weight: bold;
+    min-height: 20px;
+}
+
+.message.success {
+    color: #28a745;
+}
+
+.message.error {
+    color: #dc3545;
+}
