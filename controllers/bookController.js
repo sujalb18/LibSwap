@@ -69,6 +69,16 @@ const createBook = async (req, res) => {
 
         const savedBook = await book.save();
 
+        // Send a real-time event to connected catalogue pages
+        const io = req.app.get('io');
+
+        if (io) {
+            io.emit('booksChanged', {
+                action: 'created',
+                book: savedBook
+            });
+        }
+
         res.status(201).json({
             message: 'Book added successfully',
             book: savedBook
@@ -115,7 +125,7 @@ const updateBook = async (req, res) => {
                 available: req.body.available
             },
             {
-                new: true,
+                returnDocument: 'after',
                 runValidators: true
             }
         );
@@ -123,6 +133,16 @@ const updateBook = async (req, res) => {
         if (!updatedBook) {
             return res.status(404).json({
                 message: 'Book not found'
+            });
+        }
+
+        // Send a real-time event to connected catalogue pages
+        const io = req.app.get('io');
+
+        if (io) {
+            io.emit('booksChanged', {
+                action: 'updated',
+                book: updatedBook
             });
         }
 
@@ -154,6 +174,16 @@ const deleteBook = async (req, res) => {
         if (!deletedBook) {
             return res.status(404).json({
                 message: 'Book not found'
+            });
+        }
+
+        // Send a real-time event to connected catalogue pages
+        const io = req.app.get('io');
+
+        if (io) {
+            io.emit('booksChanged', {
+                action: 'deleted',
+                bookId: deletedBook._id
             });
         }
 
