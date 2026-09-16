@@ -1,0 +1,51 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Add a Personal Book - LibSwap</title>
+    <link rel="stylesheet" href="css/add-book.css">
+</head>
+<body>
+
+    <!-- Main heading for the page -->
+    <header>
+        <h1>Add a Personal Book</h1>
+        <p>Share a book from your personal collection with the library.</p>
+    </header>
+
+    <main>
+        <div class="form-container">
+            <!-- Form to collect book details -->
+            <form id="addBookForm">
+                <div class="form-group">
+                    <label for="title">Book Title *</label>
+                    <input type="text" id="title" placeholder="e.g. The Hobbit" required>
+                </div>
+
+                <div class="form-group">
+                    <label for="author">Author *</label>
+                    <input type="text" id="author" placeholder="e.g. J.R.R. Tolkien" required>
+                </div>
+
+                <div class="form-group">
+                    <label for="genre">Genre</label>
+                    <input type="text" id="genre" placeholder="e.g. Fantasy">
+                </div>
+
+                <!-- Message area for success or errors -->
+                <p id="message" class="message"></p>
+
+                <div class="button-group">
+                    <button type="submit" id="submitButton">Add Book</button>
+                    <!-- Link back to the main catalogue -->
+                    <a href="catalogue.html" class="back-link">Back to Catalogue</a>
+                </div>
+            </form>
+        </div>
+    </main>
+
+    <script src="js/add-book.js"></script>
+
+</body>
+</html>

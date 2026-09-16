@@ -43,12 +43,14 @@ const createBook = async (req, res) => {
         const author = req.body.author?.trim();
         const genre = req.body.genre?.trim();
 
+        // Title and author are required
         if (!title || !author) {
             return res.status(400).json({
                 message: 'Title and author are required'
             });
         }
 
+        // If availability is provided, it must be true or false
         if (
             req.body.available !== undefined &&
             typeof req.body.available !== 'boolean'
@@ -87,12 +89,14 @@ const updateBook = async (req, res) => {
         const author = req.body.author?.trim();
         const genre = req.body.genre?.trim();
 
+        // Title and author are required
         if (!title || !author) {
             return res.status(400).json({
                 message: 'Title and author are required'
             });
         }
 
+        // If availability is provided, it must be true or false
         if (
             req.body.available !== undefined &&
             typeof req.body.available !== 'boolean'
@@ -128,6 +132,13 @@ const updateBook = async (req, res) => {
         });
 
     } catch (error) {
+        // Invalid MongoDB ID format
+        if (error.name === 'CastError') {
+            return res.status(400).json({
+                message: 'Invalid book ID'
+            });
+        }
+
         res.status(500).json({
             message: 'Unable to update book',
             error: error.message
@@ -135,7 +146,7 @@ const updateBook = async (req, res) => {
     }
 };
 
-// Delete a library book
+// Delete an existing library book
 const deleteBook = async (req, res) => {
     try {
         const deletedBook = await Book.findByIdAndDelete(req.params.id);
@@ -151,6 +162,13 @@ const deleteBook = async (req, res) => {
         });
 
     } catch (error) {
+        // Invalid MongoDB ID format
+        if (error.name === 'CastError') {
+            return res.status(400).json({
+                message: 'Invalid book ID'
+            });
+        }
+
         res.status(500).json({
             message: 'Unable to delete book',
             error: error.message
