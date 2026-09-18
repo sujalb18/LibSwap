@@ -27,14 +27,18 @@ app.use('/api/auth', authRoutes);
 // Catalogue routes
 app.use('/api/books', bookRoutes);
 
-mongoose.connect(process.env.MONGODB_URI)
-    .then(() => {
-        console.log('Connected to MongoDB');
+if (require.main === module) {
+    mongoose.connect(process.env.MONGODB_URI)
+        .then(() => {
+            console.log('Connected to MongoDB');
 
-        app.listen(PORT, () => {
-            console.log(`Server is running on http://localhost:${PORT}`);
+            app.listen(PORT, () => {
+                console.log(`Server is running on http://localhost:${PORT}`);
+            });
+        })
+        .catch((error) => {
+            console.error('MongoDB connection failed:', error.message);
         });
-    })
-    .catch((error) => {
-        console.error('MongoDB connection failed:', error.message);
-    });
+}
+
+module.exports = app;
