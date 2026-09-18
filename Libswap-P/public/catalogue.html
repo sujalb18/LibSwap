@@ -1,0 +1,89 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+
+    <!-- This helps the page display properly on different screen sizes -->
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <title>LibSwap Catalogue</title>
+
+    <!-- Connecting our CSS file -->
+    <link rel="stylesheet" href="css/catalogue.css">
+</head>
+
+<body>
+
+    <!-- Main heading for the catalogue page -->
+    <header>
+        <h1>LibSwap Library Catalogue</h1>
+        <p>Browse and search for books available in the library.</p>
+    </header>
+
+    <main>
+
+        <!-- Search section -->
+        <section class="search-section">
+            <label for="searchInput">Search books</label>
+
+            <div class="search-box">
+                <input
+                    type="text"
+                    id="searchInput"
+                    placeholder="Search by title, author or genre"
+                >
+
+                <button id="searchButton">
+                    Search
+                </button>
+            </div>
+
+            <!-- Catalogue filters and sorting -->
+            <div class="filter-section">
+
+                <div class="filter-control">
+                    <label for="genreFilter">Genre</label>
+
+                    <select id="genreFilter">
+                        <option value="">All genres</option>
+                    </select>
+                </div>
+
+                <div class="filter-control">
+                    <label for="availabilityFilter">Availability</label>
+
+                    <select id="availabilityFilter">
+                        <option value="">All books</option>
+                        <option value="available">Available</option>
+                        <option value="unavailable">Unavailable</option>
+                    </select>
+                </div>
+
+                <div class="filter-control">
+                    <label for="sortSelect">Sort by</label>
+
+                    <select id="sortSelect">
+                        <option value="">Default</option>
+                        <option value="title-asc">Title A-Z</option>
+                        <option value="title-desc">Title Z-A</option>
+                        <option value="author-asc">Author A-Z</option>
+                    </select>
+                </div>
+
+            </div>
+        </section>
+
+        <!-- This message can show loading, errors or no results -->
+        <p id="message"></p>
+
+        <!-- JavaScript will add the book cards inside this section -->
+        <section id="bookList" class="book-list">
+        </section>
+
+    </main>
+
+    <!-- Connecting our JavaScript file -->
+    <script src="js/catalogue.js"></script>
+
+</body>
+</html>

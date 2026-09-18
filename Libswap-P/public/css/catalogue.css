@@ -1,0 +1,133 @@
+/* Basic page styling */
+body {
+    margin: 0;
+    font-family: Arial, sans-serif;
+    background-color: #f4f6f8;
+    color: #222;
+}
+
+/* Styling the top section of the page */
+header {
+    text-align: center;
+    padding: 30px 20px;
+    background-color: #1f4e79;
+    color: white;
+}
+
+/* Removing extra space around the heading */
+header h1 {
+    margin-bottom: 8px;
+}
+
+/* Main page area */
+main {
+    max-width: 1000px;
+    margin: 30px auto;
+    padding: 0 20px;
+}
+
+/* Search area */
+.search-section {
+    background-color: white;
+    padding: 20px;
+    border-radius: 8px;
+    margin-bottom: 20px;
+}
+
+/* Search label */
+.search-section label {
+    display: block;
+    margin-bottom: 8px;
+    font-weight: bold;
+}
+
+/* Keeps the input and button next to each other */
+.search-box {
+    display: flex;
+    gap: 10px;
+}
+
+/* Search input */
+#searchInput {
+    flex: 1;
+    padding: 10px;
+    border: 1px solid #ccc;
+    border-radius: 5px;
+    font-size: 16px;
+}
+
+/* Search button */
+#searchButton {
+    padding: 10px 18px;
+    border: none;
+    border-radius: 5px;
+    background-color: #1f4e79;
+    color: white;
+    cursor: pointer;
+}
+
+/* Changes the button slightly when the mouse is over it */
+#searchButton:hover {
+    background-color: #163a5c;
+}
+
+/* Area where all book cards will appear */
+.book-list {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+    gap: 20px;
+}
+
+/* Styling for each individual book */
+.book-card {
+    background-color: white;
+    padding: 18px;
+    border-radius: 8px;
+    border: 1px solid #ddd;
+}
+
+/* Book title */
+.book-card h2 {
+    margin-top: 0;
+    font-size: 20px;
+}
+
+/* Spacing between book details */
+.book-card p {
+    margin: 8px 0;
+}
+
+/* Message area for loading, errors or no results */
+#message {
+    margin-bottom: 20px;
+    font-weight: bold;
+}
+
+/* Filter and sorting controls */
+.filter-section {
+    display: flex;
+    gap: 15px;
+    margin-top: 20px;
+    flex-wrap: wrap;
+}
+
+/* Keeps each filter label above its dropdown */
+.filter-control {
+    flex: 1;
+    min-width: 180px;
+}
+
+.filter-control label {
+    display: block;
+    margin-bottom: 8px;
+    font-weight: bold;
+}
+
+.filter-control select {
+    width: 100%;
+    padding: 10px;
+    border: 1px solid #ccc;
+    border-radius: 5px;
+    font-size: 16px;
+    background-color: white;
+}

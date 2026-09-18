@@ -4,8 +4,8 @@ const Book = require("../models/Book");
 
 const router = express.Router();
 
-// Send Swap Request (matches frontend)
-router.post("/send", async (req, res) => {
+// Create Swap Request
+router.post("/request", async (req, res) => {
   try {
     const { bookId, ownerId, requesterId, offeredBookId, message } = req.body;
 
@@ -55,8 +55,7 @@ router.post("/send", async (req, res) => {
       ownerId,
       requesterId,
       offeredBookId,
-      message,
-      status: "pending"
+      message
     });
 
     await swapRequest.save();

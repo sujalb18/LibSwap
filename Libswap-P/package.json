@@ -1,0 +1,28 @@
+{
+  "name": "libswap",
+  "version": "1.0.0",
+  "description": "Library Management and Student Book Swapping System",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/sujalb18/LibSwap.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/sujalb18/LibSwap/issues"
+  },
+  "homepage": "https://github.com/sujalb18/LibSwap#readme",
+  "dependencies": {
+    "bcryptjs": "^3.0.3",
+    "dotenv": "^17.4.2",
+    "express": "^5.2.1",
+    "mongodb": "^7.6.0",
+    "jsonwebtoken": "^9.0.3",
+    "mongoose": "^9.9.4"
+  }
+}
