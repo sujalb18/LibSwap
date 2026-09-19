@@ -4,7 +4,9 @@ const SwapRequest = require("../models/SwapRequest.js");
 
 const router = express.Router();
 
-// Get books listed by the logged-in user
+/* -------------------------------------------
+   GET MY BOOKS
+-------------------------------------------- */
 router.get("/my-books/:userId", async (req, res) => {
   try {
     const { userId } = req.params;
@@ -32,7 +34,9 @@ router.get("/my-books/:userId", async (req, res) => {
   }
 });
 
-// Get swap requests received by the logged-in user
+/* -------------------------------------------
+   GET SWAP REQUESTS RECEIVED
+-------------------------------------------- */
 router.get("/swap-received/:userId", async (req, res) => {
   try {
     const { userId } = req.params;
@@ -48,9 +52,16 @@ router.get("/swap-received/:userId", async (req, res) => {
       .populate("bookId", "title")
       .populate("requesterId", "name email");
 
+    // Transform to match frontend
+    const formatted = receivedRequests.map(req => ({
+      fromUserName: req.requesterId?.name || "Unknown",
+      bookTitle: req.bookId?.title || "Unknown",
+      status: req.status
+    }));
+
     return res.status(200).json({
       success: true,
-      data: receivedRequests
+      data: formatted
     });
 
   } catch (error) {
@@ -62,7 +73,9 @@ router.get("/swap-received/:userId", async (req, res) => {
   }
 });
 
-// Get swap requests sent by the logged-in user
+/* -------------------------------------------
+   GET SWAP REQUESTS SENT
+-------------------------------------------- */
 router.get("/swap-sent/:userId", async (req, res) => {
   try {
     const { userId } = req.params;
@@ -78,9 +91,16 @@ router.get("/swap-sent/:userId", async (req, res) => {
       .populate("bookId", "title")
       .populate("ownerId", "name email");
 
+    // Transform to match frontend
+    const formatted = sentRequests.map(req => ({
+      toUserName: req.ownerId?.name || "Unknown",
+      bookTitle: req.bookId?.title || "Unknown",
+      status: req.status
+    }));
+
     return res.status(200).json({
       success: true,
-      data: sentRequests
+      data: formatted
     });
 
   } catch (error) {

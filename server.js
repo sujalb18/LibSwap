@@ -2,35 +2,32 @@ const express = require('express');
 const mongoose = require('mongoose');
 const authRoutes = require('./routes/authRoutes');
 const bookRoutes = require('./routes/bookRoutes');
-const dashboardRoutes = require("./routes/dashboardRoutes.js");
+const swapRoutes = require('./routes/swapRoutes');
+const dashboardRoutes = require("./routes/dashboardRoutes");
 
 require('dotenv').config();
 
 const app = express();
 app.use(express.json());
 
-// Serve frontend files
-app.use(express.static("public"));
+// Serve frontend
+app.use(express.static('public'));
 
-// Dashboard API routes
-app.use("/dashboard", dashboardRoutes);
-
-const PORT = process.env.PORT || 3000;
-
+// Routes
 app.get('/', (req, res) => {
     res.send('LibSwap server is running');
 });
 
-// Authentication routes
 app.use('/api/auth', authRoutes);
-
-// Catalogue routes
 app.use('/api/books', bookRoutes);
+app.use('/api/swap', swapRoutes);
+app.use('/dashboard', dashboardRoutes);
+
+const PORT = process.env.PORT || 3000;
 
 mongoose.connect(process.env.MONGODB_URI)
     .then(() => {
         console.log('Connected to MongoDB');
-
         app.listen(PORT, () => {
             console.log(`Server is running on http://localhost:${PORT}`);
         });
