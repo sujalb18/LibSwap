@@ -1,5 +1,6 @@
 const Review = require('../models/Review');
 
+
 // Get all reviews that are waiting for moderation
 const getPendingReviews = async (req, res) => {
     try {
@@ -38,6 +39,94 @@ const getPendingReviews = async (req, res) => {
     }
 };
 
+
+// Approve a pending review
+const approveReview = async (req, res) => {
+    try {
+        const review = await Review.findById(
+            req.params.id
+        );
+
+        if (!review) {
+            return res.status(404).json({
+                message: 'Review not found'
+            });
+        }
+
+        review.moderationStatus = 'approved';
+
+        // Record which staff user performed the action
+        review.moderatedBy = req.user.userId;
+
+        // Record when the moderation action happened
+        review.moderatedAt = new Date();
+
+        // Clear an old moderation reason if one exists
+        review.moderationReason = '';
+
+        await review.save();
+
+        return res.status(200).json({
+            message: 'Review approved successfully',
+            review
+        });
+
+    } catch (error) {
+        console.error(
+            'Unable to approve review:',
+            error
+        );
+
+        return res.status(500).json({
+            message: 'Unable to approve review'
+        });
+    }
+};
+
+
+// Remove a pending review
+const removeReview = async (req, res) => {
+    try {
+        const review = await Review.findById(
+            req.params.id
+        );
+
+        if (!review) {
+            return res.status(404).json({
+                message: 'Review not found'
+            });
+        }
+
+        review.moderationStatus = 'removed';
+
+        // Record which staff user performed the action
+        review.moderatedBy = req.user.userId;
+
+        // Record when the moderation action happened
+        review.moderatedAt = new Date();
+
+        await review.save();
+
+        return res.status(200).json({
+            message: 'Review removed successfully',
+            review
+        });
+
+    } catch (error) {
+        console.error(
+            'Unable to remove review:',
+            error
+        );
+
+        return res.status(500).json({
+            message: 'Unable to remove review'
+        });
+    }
+};
+
+
 module.exports = {
-    getPendingReviews
+    getPendingReviews,
+    approveReview,
+    removeReview
 };

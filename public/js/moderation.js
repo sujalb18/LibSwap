@@ -45,6 +45,63 @@ const showEmptyState = () => {
 };
 
 
+// Sends an approve or remove request to the backend
+const moderateReview = async (reviewId, action) => {
+    const token = getToken();
+
+    if (!token) {
+        showMessage(
+            'Staff login is required to moderate reviews.',
+            true
+        );
+
+        return;
+    }
+
+    try {
+        const response = await fetch(
+            `/api/moderation/reviews/${reviewId}/${action}`,
+            {
+                method: 'PUT',
+                headers: {
+                    Authorization: `Bearer ${token}`
+                }
+            }
+        );
+
+        const result = await response.json();
+
+        if (!response.ok) {
+            throw new Error(
+                result.message ||
+                'Unable to moderate review'
+            );
+        }
+
+        if (action === 'approve') {
+            showMessage(
+                'Review approved successfully.'
+            );
+        } else {
+            showMessage(
+                'Review removed successfully.'
+            );
+        }
+
+        // Reload the queue so the moderated review disappears
+        await loadPendingReviews();
+
+    } catch (error) {
+        showMessage(
+            error.message,
+            true
+        );
+
+        console.error(error);
+    }
+};
+
+
 // Creates one moderation review card
 const createReviewCard = (review) => {
     const card = document.createElement('article');
@@ -165,13 +222,57 @@ const createReviewCard = (review) => {
         review.comment || 'No review comment provided.';
 
 
-    // This makes it clear that actions are intentionally
-    // being implemented in the next development stage
-    const note = document.createElement('p');
-    note.className = 'review-note';
+    // Area containing moderation buttons
+    const actions = document.createElement('div');
+    actions.className = 'moderation-actions';
 
-    note.textContent =
-        'Moderation actions will be added in the next development stage.';
+
+    // Approve button
+    const approveButton = document.createElement('button');
+
+    approveButton.type = 'button';
+    approveButton.className = 'approve-button';
+    approveButton.textContent = 'Approve';
+
+    approveButton.addEventListener('click', async () => {
+        approveButton.disabled = true;
+        removeButton.disabled = true;
+
+        await moderateReview(
+            review._id,
+            'approve'
+        );
+    });
+
+
+    // Remove button
+    const removeButton = document.createElement('button');
+
+    removeButton.type = 'button';
+    removeButton.className = 'remove-button';
+    removeButton.textContent = 'Remove';
+
+    removeButton.addEventListener('click', async () => {
+        const confirmed = confirm(
+            'Are you sure you want to remove this review?'
+        );
+
+        if (!confirmed) {
+            return;
+        }
+
+        approveButton.disabled = true;
+        removeButton.disabled = true;
+
+        await moderateReview(
+            review._id,
+            'remove'
+        );
+    });
+
+
+    actions.appendChild(approveButton);
+    actions.appendChild(removeButton);
 
 
     card.appendChild(heading);
@@ -181,7 +282,7 @@ const createReviewCard = (review) => {
     card.appendChild(status);
     card.appendChild(submitted);
     card.appendChild(comment);
-    card.appendChild(note);
+    card.appendChild(actions);
 
     return card;
 };
