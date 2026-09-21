@@ -4,7 +4,9 @@ const SwapRequest = require("../models/SwapRequest.js");
 
 const router = express.Router();
 
-// ⭐ My Books (owned)
+/* -------------------------------------------
+   GET MY BOOKS (Owned)
+-------------------------------------------- */
 router.get("/my-books/:userId", async (req, res) => {
   try {
     const { userId } = req.params;
@@ -17,7 +19,9 @@ router.get("/my-books/:userId", async (req, res) => {
   }
 });
 
-// ⭐ Borrowed Books
+/* -------------------------------------------
+   GET BORROWED BOOKS
+-------------------------------------------- */
 router.get("/borrowed/:userId", async (req, res) => {
   try {
     const { userId } = req.params;
@@ -30,7 +34,9 @@ router.get("/borrowed/:userId", async (req, res) => {
   }
 });
 
-// ⭐ Reserved Books
+/* -------------------------------------------
+   GET RESERVED BOOKS
+-------------------------------------------- */
 router.get("/reservations/:userId", async (req, res) => {
   try {
     const { userId } = req.params;
@@ -43,7 +49,9 @@ router.get("/reservations/:userId", async (req, res) => {
   }
 });
 
-// ⭐ Swap Requests Received
+/* -------------------------------------------
+   GET SWAP REQUESTS RECEIVED
+-------------------------------------------- */
 router.get("/swap-received/:userId", async (req, res) => {
   try {
     const { userId } = req.params;
@@ -60,7 +68,9 @@ router.get("/swap-received/:userId", async (req, res) => {
   }
 });
 
-// ⭐ Swap Requests Sent
+/* -------------------------------------------
+   GET SWAP REQUESTS SENT
+-------------------------------------------- */
 router.get("/swap-sent/:userId", async (req, res) => {
   try {
     const { userId } = req.params;
