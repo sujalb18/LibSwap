@@ -4,21 +4,18 @@ const Book = require("../models/Book");
 
 const router = express.Router();
 
-// Send Swap Request (matches frontend)
 router.post("/send", async (req, res) => {
   try {
-    const { bookId, ownerId, requesterId, offeredBookId, message } = req.body;
+    const { requestedBookId, ownerId, requesterId, offeredBookId, message } = req.body;
 
-    // Validate required fields
-    if (!bookId || !ownerId || !requesterId || !offeredBookId) {
+    if (!requestedBookId || !ownerId || !requesterId || !offeredBookId) {
       return res.status(400).json({
         success: false,
         message: "Missing required fields"
       });
     }
 
-    // Check if book exists
-    const book = await Book.findById(bookId);
+    const book = await Book.findById(requestedBookId);
     if (!book) {
       return res.status(404).json({
         success: false,
@@ -26,7 +23,6 @@ router.post("/send", async (req, res) => {
       });
     }
 
-    // Prevent requesting own book
     if (ownerId === requesterId) {
       return res.status(400).json({
         success: false,
@@ -34,9 +30,8 @@ router.post("/send", async (req, res) => {
       });
     }
 
-    // Prevent duplicate pending requests
     const existing = await SwapRequest.findOne({
-      bookId,
+      requestedBookId,
       ownerId,
       requesterId,
       status: "pending"
@@ -49,9 +44,8 @@ router.post("/send", async (req, res) => {
       });
     }
 
-    // Create new swap request
     const swapRequest = new SwapRequest({
-      bookId,
+      requestedBookId,
       ownerId,
       requesterId,
       offeredBookId,

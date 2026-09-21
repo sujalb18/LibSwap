@@ -1,21 +1,21 @@
 const userId = localStorage.getItem("userId");
 const token = localStorage.getItem("token");
 
-// if (!userId || !token) {
-//   window.location.href = "login.html";
-// }
+if (!userId || !token) {
+  window.location.href = "login.html";
+}
 
 document.getElementById("backBtn").addEventListener("click", () => {
-  window.location.href = "dashboard.html";   // FIXED
+  window.location.href = "dashboard.html";
 });
 
 let selectedBookId = null;
 let selectedMyBookId = null;
 
-// Load available books (books from other users)
+// Load available books
 loadAvailableBooks();
 
-// Load my books (books owned by logged-in user)
+// Load my books
 loadMyBooks();
 
 // ---------- Load Available Books ----------
@@ -24,23 +24,13 @@ async function loadAvailableBooks() {
   container.innerHTML = "Loading...";
 
   try {
-    const res = await fetch(`/books/all`, {
+    const res = await fetch(`/api/books/all`, {
       headers: { Authorization: `Bearer ${token}` }
     });
 
     const result = await res.json();
 
-    if (!result.success) {
-      container.textContent = result.message;
-      return;
-    }
-
     const books = result.data.filter(b => b.ownerId !== userId);
-
-    if (books.length === 0) {
-      container.textContent = "No books available.";
-      return;
-    }
 
     container.innerHTML = "";
 
@@ -55,6 +45,7 @@ async function loadAvailableBooks() {
 
       div.querySelector("button").addEventListener("click", () => {
         selectedBookId = book._id;
+        selectedBookOwnerId = book.ownerId;   // ⭐ REQUIRED
         highlightSelection(container, div);
         enableSendButton();
       });
@@ -79,17 +70,7 @@ async function loadMyBooks() {
 
     const result = await res.json();
 
-    if (!result.success) {
-      container.textContent = result.message;
-      return;
-    }
-
     const books = result.data;
-
-    if (books.length === 0) {
-      container.textContent = "You have no books.";
-      return;
-    }
 
     container.innerHTML = "";
 
@@ -132,13 +113,8 @@ function enableSendButton() {
 document.getElementById("sendRequestBtn").addEventListener("click", async () => {
   const statusMsg = document.getElementById("statusMsg");
 
-  if (!selectedBookId || !selectedMyBookId) {
-    statusMsg.textContent = "Select both books first.";
-    return;
-  }
-
   try {
-    const res = await fetch(`/swap/send`, {
+    const res = await fetch(`/api/swap/send`, {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
@@ -146,8 +122,9 @@ document.getElementById("sendRequestBtn").addEventListener("click", async () => 
       },
       body: JSON.stringify({
         requesterId: userId,
-        bookId: selectedBookId,
-        offeredBookId: selectedMyBookId
+        requestedBookId: selectedBookId,
+        offeredBookId: selectedMyBookId,
+        ownerId: selectedBookOwnerId
       })
     });
 

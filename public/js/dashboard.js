@@ -29,7 +29,7 @@ async function loadBorrowedBooks() {
   const list = document.getElementById("borrowed-list");
 
   try {
-    const res = await fetch(`/dashboard/my-books/${userId}`, {
+    const res = await fetch(`/dashboard/borrowed/${userId}`, {
       headers: { Authorization: `Bearer ${token}` }
     });
 
@@ -77,7 +77,6 @@ async function loadAvailableBooksForBorrow() {
 
       div.querySelector("button").addEventListener("click", async () => {
 
-        // ⭐ Backend borrow request
         const borrowRes = await fetch(`/borrow/${userId}/${book._id}`, {
           method: "POST",
           headers: { Authorization: `Bearer ${token}` }
@@ -237,6 +236,9 @@ function loadSwapRequestBooks() {
     });
 }
 
+/* -------------------------------------------
+   SWAP REQUEST LIST (Backend)
+-------------------------------------------- */
 async function loadSwapRequests() {
   const list = document.getElementById("swap-list");
 
@@ -254,7 +256,7 @@ async function loadSwapRequests() {
 
     list.innerHTML = "";
     result.data.forEach(req => {
-      list.innerHTML += `<li>Swap requested for: ${req.requestedBook.title}</li>`;
+      list.innerHTML += `<li>Swap requested for: ${req.requestedBookId.title}</li>`;
     });
 
   } catch (err) {
@@ -272,5 +274,8 @@ document.getElementById("loadBorrowBooksBtn")
 document.getElementById("loadReservationBooksBtn")
   .addEventListener("click", loadReservationBooks);
 
-document.getElementById("loadSwapRequestBooksBtn")
-  .addEventListener("click", loadSwapRequestBooks);
+// ⭐ This button exists only in swap.html
+const swapBtn = document.getElementById("loadSwapRequestBooksBtn");
+if (swapBtn) {
+  swapBtn.addEventListener("click", loadSwapRequestBooks);
+}
