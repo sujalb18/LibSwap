@@ -23,7 +23,7 @@ function loadStudentInfo() {
 }
 
 /* -------------------------------------------
-   BORROWED BOOKS (Backend)
+   BORROWED BOOKS
 -------------------------------------------- */
 async function loadBorrowedBooks() {
   const list = document.getElementById("borrowed-list");
@@ -52,108 +52,7 @@ async function loadBorrowedBooks() {
 }
 
 /* -------------------------------------------
-   LOAD AVAILABLE BOOKS FOR BORROW (Backend)
--------------------------------------------- */
-async function loadAvailableBooksForBorrow() {
-  const container = document.getElementById("borrowBooksContainer");
-  container.innerHTML = "Loading...";
-
-  try {
-    const res = await fetch(`/api/books/all`);
-    const result = await res.json();
-
-    const books = result.data.filter(b => b.available === true);
-    container.innerHTML = "";
-
-    books.forEach(book => {
-      const div = document.createElement("div");
-      div.className = "book-card";
-
-      div.innerHTML = `
-        <h3>${book.title}</h3>
-        <p>Author: ${book.author}</p>
-        <button>Select</button>
-      `;
-
-      div.querySelector("button").addEventListener("click", async () => {
-
-        const borrowRes = await fetch(`/borrow/${userId}/${book._id}`, {
-          method: "POST",
-          headers: { Authorization: `Bearer ${token}` }
-        });
-
-        const borrowResult = await borrowRes.json();
-
-        if (borrowResult.success) {
-          div.innerHTML = `
-            <h3>${book.title}</h3>
-            <p>Author: ${book.author}</p>
-            <p style="color: green; font-weight: bold;">✔ Book Borrowed</p>
-          `;
-          div.style.pointerEvents = "none";
-          loadBorrowedBooks();
-        }
-      });
-
-      container.appendChild(div);
-    });
-
-  } catch (err) {
-    console.error(err);
-    container.textContent = "Error loading books.";
-  }
-}
-
-/* -------------------------------------------
-   RESERVATION BOOKS (Backend)
--------------------------------------------- */
-function loadReservationBooks() {
-  const container = document.getElementById("reservationBooksContainer");
-  container.innerHTML = "Loading...";
-
-  fetch(`/api/books/all`)
-    .then(res => res.json())
-    .then(result => {
-      const books = result.data;
-      container.innerHTML = "";
-
-      books.forEach(book => {
-        const div = document.createElement("div");
-        div.className = "book-card";
-
-        div.innerHTML = `
-          <h3>${book.title}</h3>
-          <p>Author: ${book.author}</p>
-          <button class="reserve-btn">Reserve</button>
-        `;
-
-        div.querySelector(".reserve-btn").addEventListener("click", async () => {
-
-          const reserveRes = await fetch(`/reserve/${userId}/${book._id}`, {
-            method: "POST",
-            headers: { Authorization: `Bearer ${token}` }
-          });
-
-          const reserveResult = await reserveRes.json();
-
-          if (reserveResult.success) {
-            div.innerHTML = `
-              <h3>${book.title}</h3>
-              <p>Author: ${book.author}</p>
-              <p style="color: orange; font-weight: bold;">✔ Book Reserved</p>
-            `;
-            div.style.pointerEvents = "none";
-            loadReservations();
-          }
-        });
-
-        container.appendChild(div);
-      });
-    });
-}
-
-/* -------------------------------------------
-   RESERVATION LIST (Backend)
+   RESERVATIONS
 -------------------------------------------- */
 async function loadReservations() {
   const list = document.getElementById("reservation-list");
@@ -182,100 +81,111 @@ async function loadReservations() {
 }
 
 /* -------------------------------------------
-   SWAP REQUESTS (Backend)
--------------------------------------------- */
-function loadSwapRequestBooks() {
-  const container = document.getElementById("swapRequestBooksContainer");
-  container.innerHTML = "Loading...";
-
-  fetch(`/api/books/all`)
-    .then(res => res.json())
-    .then(result => {
-      const books = result.data;
-      container.innerHTML = "";
-
-      books.forEach(book => {
-        const div = document.createElement("div");
-        div.className = "book-card";
-
-        div.innerHTML = `
-          <h3>${book.title}</h3>
-          <p>Author: ${book.author}</p>
-          <button class="swap-btn">Request Swap</button>
-        `;
-
-        div.querySelector(".swap-btn").addEventListener("click", async () => {
-
-          const swapRes = await fetch(`/swap/request`, {
-            method: "POST",
-            headers: {
-              "Content-Type": "application/json",
-              Authorization: `Bearer ${token}`
-            },
-            body: JSON.stringify({
-              requesterId: userId,
-              requestedBookId: book._id
-            })
-          });
-
-          const swapResult = await swapRes.json();
-
-          if (swapResult.success) {
-            div.innerHTML = `
-              <h3>${book.title}</h3>
-              <p>Author: ${book.author}</p>
-              <p style="color: blue; font-weight: bold;">✔ Swap Requested</p>
-            `;
-            div.style.pointerEvents = "none";
-            loadSwapRequests();
-          }
-        });
-
-        container.appendChild(div);
-      });
-    });
-}
-
-/* -------------------------------------------
-   SWAP REQUEST LIST (Backend)
+   SWAP REQUESTS (Sent + Received)
 -------------------------------------------- */
 async function loadSwapRequests() {
-  const list = document.getElementById("swap-list");
+  const sentList = document.getElementById("swap-sent-list");
+  const receivedList = document.getElementById("swap-received-list");
 
   try {
-    const res = await fetch(`/dashboard/swap-sent/${userId}`, {
+    const res = await fetch(`/dashboard/swap-all/${userId}`, {
       headers: { Authorization: `Bearer ${token}` }
     });
 
     const result = await res.json();
 
-    if (!result.success || result.data.length === 0) {
-      list.innerHTML = "<li>No swap requests yet.</li>";
+    if (!result.success) {
+      sentList.innerHTML = "<li>Error loading swap requests.</li>";
+      receivedList.innerHTML = "<li>Error loading swap requests.</li>";
       return;
     }
 
-    list.innerHTML = "";
-    result.data.forEach(req => {
-      list.innerHTML += `<li>Swap requested for: ${req.requestedBookId.title}</li>`;
-    });
+    const { sent, received } = result.data;
+
+    /* ----- SENT REQUESTS ----- */
+    if (sent.length === 0) {
+      sentList.innerHTML = "<li>No sent swap requests.</li>";
+    } else {
+      sentList.innerHTML = "";
+      sent.forEach(req => {
+        sentList.innerHTML += `
+          <li class="swap-card">
+            <p><strong>You requested:</strong> ${req.requestedBookId.title}</p>
+            <p><strong>You offered:</strong> ${req.offeredBookId.title}</p>
+            <p>Status: ${req.status}</p>
+
+            ${req.status === "pending" ? `
+              <button class="cancel-btn" data-id="${req._id}">Cancel</button>
+            ` : ""}
+          </li>
+        `;
+      });
+    }
+
+    /* ----- RECEIVED REQUESTS ----- */
+    if (received.length === 0) {
+      receivedList.innerHTML = "<li>No received swap requests.</li>";
+    } else {
+      receivedList.innerHTML = "";
+      received.forEach(req => {
+        receivedList.innerHTML += `
+          <li class="swap-card">
+            <p><strong>Requested from you:</strong> ${req.requestedBookId.title}</p>
+            <p><strong>They offered:</strong> ${req.offeredBookId.title}</p>
+            <p>Status: ${req.status}</p>
+
+            ${req.status === "pending" ? `
+              <button class="accept-btn" data-id="${req._id}">Accept</button>
+              <button class="reject-btn" data-id="${req._id}">Reject</button>
+            ` : ""}
+          </li>
+        `;
+      });
+    }
+
+    attachSwapButtons();
 
   } catch (err) {
     console.error(err);
-    list.innerHTML = "<li>Error loading swap requests.</li>";
+    sentList.innerHTML = "<li>Error loading swap requests.</li>";
+    receivedList.innerHTML = "<li>Error loading swap requests.</li>";
   }
 }
 
 /* -------------------------------------------
-   EVENT LISTENERS
+   BUTTON HANDLERS (Accept / Reject / Cancel)
 -------------------------------------------- */
-document.getElementById("loadBorrowBooksBtn")
-  .addEventListener("click", loadAvailableBooksForBorrow);
+function attachSwapButtons() {
+  document.querySelectorAll(".accept-btn").forEach(btn => {
+    btn.addEventListener("click", async () => {
+      const id = btn.dataset.id;
+      await fetch(`/swap/accept/${id}`, {
+        method: "POST",
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      loadSwapRequests();
+    });
+  });
 
-document.getElementById("loadReservationBooksBtn")
-  .addEventListener("click", loadReservationBooks);
+  document.querySelectorAll(".reject-btn").forEach(btn => {
+    btn.addEventListener("click", async () => {
+      const id = btn.dataset.id;
+      await fetch(`/swap/reject/${id}`, {
+        method: "POST",
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      loadSwapRequests();
+    });
+  });
 
-// ⭐ This button exists only in swap.html
-const swapBtn = document.getElementById("loadSwapRequestBooksBtn");
-if (swapBtn) {
-  swapBtn.addEventListener("click", loadSwapRequestBooks);
+  document.querySelectorAll(".cancel-btn").forEach(btn => {
+    btn.addEventListener("click", async () => {
+      const id = btn.dataset.id;
+      await fetch(`/swap/cancel/${id}`, {
+        method: "POST",
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      loadSwapRequests();
+    });
+  });
 }

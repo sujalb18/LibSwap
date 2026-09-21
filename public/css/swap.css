@@ -151,3 +151,62 @@ body {
   font-weight: 600;
   color: #1e3d59;
 }
+
+/* Swap Request Cards */
+.swap-card {
+  background: #ffffff;
+  padding: 15px;
+  border-radius: 8px;
+  margin-bottom: 12px;
+  box-shadow: 0 2px 6px rgba(0,0,0,0.08);
+  border-left: 4px solid #1e3d59;
+}
+
+.swap-card p {
+  margin: 5px 0;
+  color: #333;
+}
+
+/* Swap Buttons */
+.accept-btn,
+.reject-btn,
+.cancel-btn {
+  padding: 8px 14px;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+  margin-right: 10px;
+  margin-top: 10px;
+  font-size: 14px;
+  transition: background 0.2s ease, transform 0.15s ease;
+}
+
+/* Accept */
+.accept-btn {
+  background: #2ecc71;
+  color: white;
+}
+.accept-btn:hover {
+  background: #27c165;
+  transform: translateY(-2px);
+}
+
+/* Reject */
+.reject-btn {
+  background: #e74c3c;
+  color: white;
+}
+.reject-btn:hover {
+  background: #c0392b;
+  transform: translateY(-2px);
+}
+
+/* Cancel */
+.cancel-btn {
+  background: #f1c40f;
+  color: #333;
+}
+.cancel-btn:hover {
+  background: #d4ac0d;
+  transform: translateY(-2px);
+}
