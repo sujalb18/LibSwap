@@ -29,7 +29,8 @@ async function loadBorrowedBooks() {
   const list = document.getElementById("borrowed-list");
 
   try {
-    const res = await fetch(`/dashboard/my-books/${userId}`, {
+    // ⭐ FIXED: Correct endpoint for borrowed books
+    const res = await fetch(`/dashboard/borrowed/${userId}`, {
       headers: { Authorization: `Bearer ${token}` }
     });
 
@@ -254,7 +255,7 @@ async function loadSwapRequests() {
 
     list.innerHTML = "";
     result.data.forEach(req => {
-      list.innerHTML += `<li>Swap requested for: ${req.requestedBook.title}</li>`;
+      list.innerHTML += `<li>Swap requested for: ${req.requestedBookId.title}</li>`;
     });
 
   } catch (err) {
@@ -272,5 +273,8 @@ document.getElementById("loadBorrowBooksBtn")
 document.getElementById("loadReservationBooksBtn")
   .addEventListener("click", loadReservationBooks);
 
-document.getElementById("loadSwapRequestBooksBtn")
-  .addEventListener("click", loadSwapRequestBooks);
+// ⭐ This button exists only in swap.html
+const swapBtn = document.getElementById("loadSwapRequestBooksBtn");
+if (swapBtn) {
+  swapBtn.addEventListener("click", loadSwapRequestBooks);
+}
