@@ -1,3 +1,4 @@
+const mongoose = require('mongoose');
 const Review = require('../models/Review');
 
 
@@ -43,6 +44,13 @@ const getPendingReviews = async (req, res) => {
 // Approve a pending review
 const approveReview = async (req, res) => {
     try {
+        // Check that the review ID has a valid MongoDB format
+        if (!mongoose.Types.ObjectId.isValid(req.params.id)) {
+            return res.status(400).json({
+                message: 'Invalid review ID'
+            });
+        }
+
         const review = await Review.findById(
             req.params.id
         );
@@ -50,6 +58,15 @@ const approveReview = async (req, res) => {
         if (!review) {
             return res.status(404).json({
                 message: 'Review not found'
+            });
+        }
+
+        // Only reviews still waiting for moderation
+        // can be approved
+        if (review.moderationStatus !== 'pending') {
+            return res.status(409).json({
+                message:
+                    'Review has already been moderated'
             });
         }
 
@@ -87,6 +104,13 @@ const approveReview = async (req, res) => {
 // Remove a pending review
 const removeReview = async (req, res) => {
     try {
+        // Check that the review ID has a valid MongoDB format
+        if (!mongoose.Types.ObjectId.isValid(req.params.id)) {
+            return res.status(400).json({
+                message: 'Invalid review ID'
+            });
+        }
+
         const review = await Review.findById(
             req.params.id
         );
@@ -94,6 +118,15 @@ const removeReview = async (req, res) => {
         if (!review) {
             return res.status(404).json({
                 message: 'Review not found'
+            });
+        }
+
+        // Only reviews still waiting for moderation
+        // can be removed
+        if (review.moderationStatus !== 'pending') {
+            return res.status(409).json({
+                message:
+                    'Review has already been moderated'
             });
         }
 
