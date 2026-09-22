@@ -83,6 +83,13 @@ const approveReview = async (req, res) => {
 
         await review.save();
 
+        // Notify connected moderation pages in real time
+        const io = req.app.get('io');
+
+        if (io) {
+            io.emit('moderationChanged');
+        }
+
         return res.status(200).json({
             message: 'Review approved successfully',
             review
@@ -139,6 +146,13 @@ const removeReview = async (req, res) => {
         review.moderatedAt = new Date();
 
         await review.save();
+
+        // Notify connected moderation pages in real time
+        const io = req.app.get('io');
+
+        if (io) {
+            io.emit('moderationChanged');
+        }
 
         return res.status(200).json({
             message: 'Review removed successfully',

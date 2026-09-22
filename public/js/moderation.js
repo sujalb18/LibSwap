@@ -6,6 +6,10 @@ const reviewList =
     document.getElementById('reviewList');
 
 
+// Connect this moderation page to Socket.IO
+const socket = io();
+
+
 // Returns the JWT saved when the user logged in
 const getToken = () => {
     return localStorage.getItem('token');
@@ -88,7 +92,7 @@ const moderateReview = async (reviewId, action) => {
             );
         }
 
-        // Reload the queue so the moderated review disappears
+        // Reload this page immediately after the action
         await loadPendingReviews();
 
     } catch (error) {
@@ -436,6 +440,14 @@ const checkStaffAccess = async () => {
         return false;
     }
 };
+
+
+// Listen for moderation changes from the server
+socket.on('moderationChanged', async () => {
+    // Automatically refresh the pending queue
+    // without refreshing the browser page
+    await loadPendingReviews();
+});
 
 
 // Starts the moderation page
