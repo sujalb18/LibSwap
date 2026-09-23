@@ -2,7 +2,7 @@ const mongoose = require("mongoose");
 
 const swapRequestSchema = new mongoose.Schema(
   {
-    bookId: {
+    requestedBookId: {
       type: mongoose.Schema.Types.ObjectId,
       ref: "Book",
       required: true
