@@ -8,6 +8,7 @@ loadStudentInfo();
 loadBorrowedBooks();
 loadReservations();
 loadSwapRequests();
+loadMyBooks();
 
 /* -------------------------------------------
    STUDENT INFO
@@ -188,4 +189,99 @@ function attachSwapButtons() {
       loadSwapRequests();
     });
   });
+}
+
+/* -------------------------------------------
+   MY BOOKS (Owned) - ADD & DELETE LOGIC
+-------------------------------------------- */
+async function loadMyBooks() {
+  const list = document.getElementById("my-books-list");
+  if (!list) return; // Prevent errors if HTML isn't updated yet
+
+  try {
+    const res = await fetch(`/dashboard/my-books/${userId}`, {
+      headers: { Authorization: `Bearer ${token}` }
+    });
+    const result = await res.json();
+
+    if (!result.success || result.data.length === 0) {
+      list.innerHTML = "<li>You haven't added any personal books yet.</li>";
+      return;
+    }
+
+    list.innerHTML = "";
+    result.data.forEach(book => {
+      list.innerHTML += `
+        <li style="margin-bottom: 10px; display: flex; justify-content: space-between; align-items: center; max-width: 400px;">
+          <span><strong>${book.title}</strong> by ${book.author}</span>
+          <button class="delete-btn" onclick="deleteMyBook('${book._id}')" style="background: red; color: white; border: none; padding: 5px 10px; cursor: pointer; border-radius: 4px;">Delete</button>
+        </li>
+      `;
+    });
+  } catch (err) {
+    console.error(err);
+    list.innerHTML = "<li>Error loading your books.</li>";
+  }
+}
+
+// Handle Add Book Form Submission
+const addBookForm = document.getElementById("dashboardAddBookForm");
+if (addBookForm) {
+  addBookForm.addEventListener("submit", async (e) => {
+    e.preventDefault();
+    
+    const title = document.getElementById("newBookTitle").value;
+    const author = document.getElementById("newBookAuthor").value;
+    const genre = document.getElementById("newBookGenre").value;
+    const msg = document.getElementById("addBookMessage");
+
+    try {
+      const res = await fetch(`/dashboard/my-books/${userId}`, {
+        method: "POST",
+        headers: { 
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}` 
+        },
+        body: JSON.stringify({ title, author, genre })
+      });
+
+      const result = await res.json();
+
+      if (result.success) {
+        msg.style.color = "green";
+        msg.textContent = "Book added successfully!";
+        addBookForm.reset();
+        loadMyBooks(); // Instantly refresh the list
+      } else {
+        msg.style.color = "red";
+        msg.textContent = result.message || "Failed to add book.";
+      }
+    } catch (err) {
+      console.error(err);
+      msg.style.color = "red";
+      msg.textContent = "Server error.";
+    }
+  });
+}
+
+// Handle Deleting a Book
+async function deleteMyBook(bookId) {
+  if (!confirm("Are you sure you want to permanently delete this book?")) return;
+
+  try {
+    const res = await fetch(`/dashboard/my-books/${userId}/${bookId}`, {
+      method: "DELETE",
+      headers: { Authorization: `Bearer ${token}` }
+    });
+    const result = await res.json();
+
+    if (result.success) {
+      loadMyBooks(); // Instantly refresh the list
+    } else {
+      alert(result.message || "Failed to delete book.");
+    }
+  } catch (err) {
+    console.error(err);
+    alert("Error deleting book.");
+  }
 }
