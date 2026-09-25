@@ -89,22 +89,44 @@ router.get("/swap-sent/:userId", async (req, res) => {
 
 
 /* -------------------------------------------
-   ADD A PERSONAL BOOK (Tied to user ID)
+   ADD A PERSONAL BOOK (Owned by User)
 -------------------------------------------- */
 router.post("/my-books/:userId", async (req, res) => {
   try {
     const { userId } = req.params;
-    const { title, author, genre } = req.body;
+    let { title, author, genre } = req.body;
 
-    if (!title || !author) {
-      return res.status(400).json({ success: false, message: "Title and author are required" });
+    // 1. Strict Type Checking (Prevents crashes from invalid data types)
+    if (typeof title !== 'string' || typeof author !== 'string') {
+      return res.status(400).json({ success: false, message: "Invalid data format." });
     }
 
+    // 2. Trim spaces and verify they aren't empty
+    title = title.trim();
+    author = author.trim();
+    genre = typeof genre === 'string' ? genre.trim() : "";
+
+    if (!title || !author) {
+      return res.status(400).json({ success: false, message: "Title and author cannot be empty or just spaces." });
+    }
+
+    // 3. Enforce Max Lengths on the server side
+    if (title.length > 100 || author.length > 50 || genre.length > 30) {
+      return res.status(400).json({ success: false, message: "Input exceeds maximum allowed length." });
+    }
+
+    // 4. Check for exact duplicates by this user
+    const existingBook = await Book.findOne({ title, author, ownerId: userId });
+    if (existingBook) {
+      return res.status(400).json({ success: false, message: "You have already added this book." });
+    }
+
+    // 5. Save the clean data
     const newBook = new Book({
-      title: title.trim(),
-      author: author.trim(),
-      genre: genre ? genre.trim() : "",
-      ownerId: userId, // Attach the student's ID here
+      title,
+      author,
+      genre,
+      ownerId: userId,
       available: true
     });
 
@@ -117,21 +139,30 @@ router.post("/my-books/:userId", async (req, res) => {
 });
 
 /* -------------------------------------------
-   DELETE A PERSONAL BOOK (Only if owned by user)
+   DELETE A PERSONAL BOOK
 -------------------------------------------- */
 router.delete("/my-books/:userId/:bookId", async (req, res) => {
   try {
     const { userId, bookId } = req.params;
 
-    // IMPORTANT: Ensure the book exists AND belongs to the user trying to delete it
+    // verify book exists and user actually owns it
     const book = await Book.findOne({ _id: bookId, ownerId: userId });
     
     if (!book) {
-      return res.status(404).json({ success: false, message: "Book not found or permission denied" });
+      return res.status(404).json({ success: false, message: "Book not found or permission denied." });
     }
 
+    // prevent deletion if someone else is borrowing/reserving it
+    if (book.borrowedBy || book.reservedBy) {
+      return res.status(400).json({ 
+        success: false, 
+        message: "Cannot delete this book because it is currently borrowed or reserved." 
+      });
+    }
+
+    // delete the book
     await Book.findByIdAndDelete(bookId);
-    return res.status(200).json({ success: true, message: "Book deleted" });
+    return res.status(200).json({ success: true, message: "Book deleted successfully." });
   } catch (error) {
     console.error("Dashboard delete book error:", error);
     return res.status(500).json({ success: false, message: "Server error" });

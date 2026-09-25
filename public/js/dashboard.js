@@ -4,11 +4,11 @@ const token = localStorage.getItem("movieflixToken");
 const userId = demoUser.id;
 
 // ⭐ Load initial sections
+loadMyBooks();
 loadStudentInfo();
 loadBorrowedBooks();
 loadReservations();
 loadSwapRequests();
-loadMyBooks();
 
 /* -------------------------------------------
    STUDENT INFO
@@ -192,11 +192,11 @@ function attachSwapButtons() {
 }
 
 /* -------------------------------------------
-   MY BOOKS (Owned) - ADD & DELETE LOGIC
+   MY BOOKS (Owned) - FETCH, ADD, & DELETE
 -------------------------------------------- */
 async function loadMyBooks() {
   const list = document.getElementById("my-books-list");
-  if (!list) return; // Prevent errors if HTML isn't updated yet
+  if (!list) return; 
 
   try {
     const res = await fetch(`/dashboard/my-books/${userId}`, {
@@ -224,16 +224,31 @@ async function loadMyBooks() {
   }
 }
 
-// Handle Add Book Form Submission
+// Handle Add Book Form Submission with Client-Side Validation
 const addBookForm = document.getElementById("dashboardAddBookForm");
 if (addBookForm) {
   addBookForm.addEventListener("submit", async (e) => {
     e.preventDefault();
     
-    const title = document.getElementById("newBookTitle").value;
-    const author = document.getElementById("newBookAuthor").value;
-    const genre = document.getElementById("newBookGenre").value;
     const msg = document.getElementById("addBookMessage");
+    
+    // 1. Get values and immediately trim whitespace from the edges
+    const title = document.getElementById("newBookTitle").value.trim();
+    const author = document.getElementById("newBookAuthor").value.trim();
+    const genre = document.getElementById("newBookGenre").value.trim();
+    
+    // 2. Check if they are empty AFTER trimming (prevents spacebar bypassing)
+    if (!title || !author) {
+      msg.style.color = "red";
+      msg.textContent = "Title and Author cannot be empty or just spaces.";
+      return; 
+    }
+
+    // 3. Disable button to prevent double-clicks/spam submissions
+    const submitBtn = addBookForm.querySelector('button[type="submit"]');
+    submitBtn.disabled = true;
+    submitBtn.textContent = "Adding...";
+    msg.textContent = ""; 
 
     try {
       const res = await fetch(`/dashboard/my-books/${userId}`, {
@@ -242,6 +257,7 @@ if (addBookForm) {
           "Content-Type": "application/json",
           Authorization: `Bearer ${token}` 
         },
+        // Send the safely trimmed values
         body: JSON.stringify({ title, author, genre })
       });
 
@@ -260,12 +276,17 @@ if (addBookForm) {
       console.error(err);
       msg.style.color = "red";
       msg.textContent = "Server error.";
+    } finally {
+      // 4. Re-enable the button regardless of success or failure
+      submitBtn.disabled = false;
+      submitBtn.textContent = "Add Book";
     }
   });
 }
 
-// Handle Deleting a Book
+// Handle Deleting a Book with Safety Checks
 async function deleteMyBook(bookId) {
+  // 1. Client-side confirmation
   if (!confirm("Are you sure you want to permanently delete this book?")) return;
 
   try {
@@ -276,8 +297,9 @@ async function deleteMyBook(bookId) {
     const result = await res.json();
 
     if (result.success) {
-      loadMyBooks(); // Instantly refresh the list
+      loadMyBooks(); // Instantly refresh the list to reflect deletion
     } else {
+      // If the backend blocked it (e.g., currently borrowed), show the backend error message
       alert(result.message || "Failed to delete book.");
     }
   } catch (err) {
