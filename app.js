@@ -3,6 +3,7 @@ const express = require('express');
 const authRoutes = require('./routes/authRoutes');
 const bookRoutes = require('./routes/bookRoutes');
 const dashboardRoutes = require('./routes/dashboardRoutes.js');
+const path = require('path');
 
 const app = express();
 
@@ -14,7 +15,7 @@ app.use(express.static('public'));
 
 // Main route
 app.get('/', (req, res) => {
-    res.send('LibSwap server is running');
+    res.sendFile(path.join(__dirname, 'public', 'login.html'));
 });
 
 // Authentication routes
