@@ -1,7 +1,10 @@
-const userId = localStorage.getItem("userId");
+// ⭐ Read user from localStorage (same as dashboard)
+const demoUser = JSON.parse(localStorage.getItem("user"));
 const token = localStorage.getItem("token");
+const userId = demoUser._id;
 
-if (!userId || !token) {
+// Redirect if not logged in
+if (!demoUser || !token) {
   window.location.href = "login.html";
 }
 
@@ -11,6 +14,7 @@ document.getElementById("backBtn").addEventListener("click", () => {
 
 let selectedBookId = null;
 let selectedMyBookId = null;
+let selectedBookOwnerId = null;   // ⭐ FIXED
 
 // Load available books
 loadAvailableBooks();
@@ -30,7 +34,8 @@ async function loadAvailableBooks() {
 
     const result = await res.json();
 
-    const books = result.data.filter(b => b.ownerId !== userId);
+    // ⭐ FIXED ownerId comparison
+    const books = result.data.filter(b => b.ownerId.toString() !== userId);
 
     container.innerHTML = "";
 
@@ -45,7 +50,7 @@ async function loadAvailableBooks() {
 
       div.querySelector("button").addEventListener("click", () => {
         selectedBookId = book._id;
-        selectedBookOwnerId = book.ownerId;   // ⭐ REQUIRED
+        selectedBookOwnerId = book.ownerId;   // ⭐ FIXED
         highlightSelection(container, div);
         enableSendButton();
       });
@@ -69,7 +74,6 @@ async function loadMyBooks() {
     });
 
     const result = await res.json();
-
     const books = result.data;
 
     container.innerHTML = "";
@@ -124,7 +128,7 @@ document.getElementById("sendRequestBtn").addEventListener("click", async () => 
         requesterId: userId,
         requestedBookId: selectedBookId,
         offeredBookId: selectedMyBookId,
-        ownerId: selectedBookOwnerId
+        ownerId: selectedBookOwnerId   // ⭐ FIXED
       })
     });
 

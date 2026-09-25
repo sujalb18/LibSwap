@@ -1,7 +1,7 @@
 // ⭐ Read user from localStorage (set during login)
-const demoUser = JSON.parse(localStorage.getItem("movieflixUser"));
-const token = localStorage.getItem("movieflixToken");
-const userId = demoUser.id;
+const demoUser = JSON.parse(localStorage.getItem("user"));   // FIXED
+const token = localStorage.getItem("token");                 // FIXED
+const userId = demoUser._id;                                 // FIXED
 
 // ⭐ Load initial sections
 loadStudentInfo();
@@ -88,7 +88,8 @@ async function loadSwapRequests() {
   const receivedList = document.getElementById("swap-received-list");
 
   try {
-    const res = await fetch(`/dashboard/swap-all/${userId}`, {
+    // ⭐ Correct route
+    const res = await fetch(`/swap/all/${userId}`, {
       headers: { Authorization: `Bearer ${token}` }
     });
 

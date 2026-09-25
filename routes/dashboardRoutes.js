@@ -87,4 +87,33 @@ router.get("/swap-sent/:userId", async (req, res) => {
   }
 });
 
+/* -------------------------------------------
+   ⭐ COMBINED SWAP REQUESTS (Sent + Received)
+   This matches dashboard.js → /swap/all/:userId
+-------------------------------------------- */
+router.get("/swap/all/:userId", async (req, res) => {
+  try {
+    const { userId } = req.params;
+
+    const sent = await SwapRequest.find({ requesterId: userId })
+      .populate("requestedBookId", "title author")
+      .populate("offeredBookId", "title author")
+      .populate("ownerId", "fullName email");
+
+    const received = await SwapRequest.find({ ownerId: userId })
+      .populate("requestedBookId", "title author")
+      .populate("offeredBookId", "title author")
+      .populate("requesterId", "fullName email");
+
+    return res.status(200).json({
+      success: true,
+      data: { sent, received }
+    });
+
+  } catch (error) {
+    console.error("Dashboard swap-all error:", error);
+    return res.status(500).json({ success: false, message: "Server error" });
+  }
+});
+
 module.exports = router;

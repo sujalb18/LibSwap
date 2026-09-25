@@ -15,7 +15,7 @@ router.post("/reject/:id", swapController.rejectSwapRequest);
 // Cancel swap
 router.post("/cancel/:id", swapController.cancelSwapRequest);
 
-// Get all swap requests (sent + received)
-router.get("/dashboard/swap-all/:userId", swapController.getAllSwapRequests);
+// ⭐ Correct route for dashboard + swap page
+router.get("/swap/all/:userId", swapController.getAllSwapRequests);
 
 module.exports = router;
