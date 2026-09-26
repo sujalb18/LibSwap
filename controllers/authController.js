@@ -1,6 +1,6 @@
 const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
-const User = require('../model/User');
+const User = require('../models/User');
 
 // Register a new student
 const register = async (req, res) => {
