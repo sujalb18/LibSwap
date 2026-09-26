@@ -1,9 +1,17 @@
-// ⭐ Read user from localStorage (set during login)
-const demoUser = JSON.parse(localStorage.getItem("movieflixUser"));
-const token = localStorage.getItem("movieflixToken");
-const userId = demoUser.id;
+// ⭐ Read user details from shared login localStorage
+const userId = localStorage.getItem("userId");
+const token = localStorage.getItem("token");
+const fullName = localStorage.getItem("fullName");
+const username = localStorage.getItem("username");
+const email = localStorage.getItem("email");
+const role = localStorage.getItem("role");
 
-// ⭐ Load initial sections
+// Redirect if not logged in
+if (!userId || !token) {
+  window.location.href = "login.html";
+}
+
+// Load dashboard sections
 loadStudentInfo();
 loadBorrowedBooks();
 loadReservations();
@@ -15,10 +23,10 @@ loadSwapRequests();
 function loadStudentInfo() {
   const container = document.getElementById("student-details");
   container.innerHTML = `
-    <p><strong>Name:</strong> ${demoUser.fullName}</p>
-    <p><strong>Username:</strong> ${demoUser.username}</p>
-    <p><strong>Email:</strong> ${demoUser.email}</p>
-    <p><strong>Role:</strong> Student</p>
+    <p><strong>Name:</strong> ${fullName}</p>
+    <p><strong>Username:</strong> ${username}</p>
+    <p><strong>Email:</strong> ${email}</p>
+    <p><strong>Role:</strong> ${role}</p>
   `;
 }
 
@@ -46,7 +54,6 @@ async function loadBorrowedBooks() {
     });
 
   } catch (err) {
-    console.error(err);
     list.innerHTML = "<li>Error loading borrowed books.</li>";
   }
 }
@@ -75,7 +82,6 @@ async function loadReservations() {
     });
 
   } catch (err) {
-    console.error(err);
     list.innerHTML = "<li>Error loading reservations.</li>";
   }
 }
@@ -88,7 +94,8 @@ async function loadSwapRequests() {
   const receivedList = document.getElementById("swap-received-list");
 
   try {
-    const res = await fetch(`/dashboard/swap-all/${userId}`, {
+    // ⭐ Correct route
+    const res = await fetch(`/swap/all/${userId}`, {
       headers: { Authorization: `Bearer ${token}` }
     });
 
@@ -146,7 +153,6 @@ async function loadSwapRequests() {
     attachSwapButtons();
 
   } catch (err) {
-    console.error(err);
     sentList.innerHTML = "<li>Error loading swap requests.</li>";
     receivedList.innerHTML = "<li>Error loading swap requests.</li>";
   }

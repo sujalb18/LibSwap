@@ -2,6 +2,25 @@
 
 Library Management and Student Book Swapping System
 
+
+# Swap Request Dashboard
+
+The Swap Request Dashboard allows students to submit a request to swap a book. It is accessed from the main Student Dashboard.
+
+## Features Implemented
+
+### 1. Dashboard Navigation
+- Students can switch from the main dashboard to the Swap Request dashboard using the navigation button.
+
+### 2. Swap Request Form
+- Simple form layout for entering swap details.
+- Clean and easy-to-understand interface.
+
+### 3. Return Navigation
+- Students can return to the main dashboard.
+=======
+=======
+
 ## Overview
 
 LibSwap is a web-based library and book-swapping application developed for SIT725.
@@ -321,6 +340,7 @@ The catalogue does not require a manual refresh to see these changes.
 
 ---
 
+>>>>>>> a4d0918f96bd88d4f9c95d141037a2d758276762
 # Student Dashboard
 
 The repository also contains a student dashboard module.
@@ -338,14 +358,29 @@ Current dashboard functionality includes routes for:
 
 Dashboard API routes include:
 
+<<<<<<< HEAD
+### 4. Navigation
+- A button allows the student to switch to the Swap Request dashboard.
+>>>>>>> faf251139ff1c891d0205072dcb0ba84e4e15a61
+=======
 ```text
 GET /dashboard/my-books/:userId
 GET /dashboard/swap-received/:userId
 GET /dashboard/swap-sent/:userId
 ```
+>>>>>>> a4d0918f96bd88d4f9c95d141037a2d758276762
 
 The dashboard frontend contains sections for:
 
+<<<<<<< HEAD
+## Purpose
+<<<<<<< HEAD
+This dashboard provides a dedicated section for students to initiate swap requests and supports the overall UI flow of the application.
+=======
+This dashboard supports the user stories for Task 9.2 by demonstrating UI interaction control and simple navigation.
+
+>>>>>>> faf251139ff1c891d0205072dcb0ba84e4e15a61
+=======
 - My Books
 - Swap Requests Received
 - Swap Requests Sent
@@ -756,3 +791,4 @@ before opening the final pull request to `main`.
 - Real-time Socket.IO catalogue updates
 - Staff-only API authorization
 - 18 passing automated API tests
+>>>>>>> a4d0918f96bd88d4f9c95d141037a2d758276762
