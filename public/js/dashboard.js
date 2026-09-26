@@ -4,6 +4,7 @@ const token = localStorage.getItem("movieflixToken");
 const userId = demoUser.id;
 
 // ⭐ Load initial sections
+loadMyBooks();
 loadStudentInfo();
 loadBorrowedBooks();
 loadReservations();
@@ -188,4 +189,121 @@ function attachSwapButtons() {
       loadSwapRequests();
     });
   });
+}
+
+/* -------------------------------------------
+   MY BOOKS (Owned) - FETCH, ADD, & DELETE
+-------------------------------------------- */
+async function loadMyBooks() {
+  const list = document.getElementById("my-books-list");
+  if (!list) return; 
+
+  try {
+    const res = await fetch(`/dashboard/my-books/${userId}`, {
+      headers: { Authorization: `Bearer ${token}` }
+    });
+    const result = await res.json();
+
+    if (!result.success || result.data.length === 0) {
+      list.innerHTML = "<li>You haven't added any personal books yet.</li>";
+      return;
+    }
+
+    list.innerHTML = "";
+    result.data.forEach(book => {
+      list.innerHTML += `
+        <li style="margin-bottom: 10px; display: flex; justify-content: space-between; align-items: center; max-width: 400px;">
+          <span><strong>${book.title}</strong> by ${book.author}</span>
+          <button class="delete-btn" onclick="deleteMyBook('${book._id}')" style="background: red; color: white; border: none; padding: 5px 10px; cursor: pointer; border-radius: 4px;">Delete</button>
+        </li>
+      `;
+    });
+  } catch (err) {
+    console.error(err);
+    list.innerHTML = "<li>Error loading your books.</li>";
+  }
+}
+
+// Handle Add Book Form Submission with Client-Side Validation
+const addBookForm = document.getElementById("dashboardAddBookForm");
+if (addBookForm) {
+  addBookForm.addEventListener("submit", async (e) => {
+    e.preventDefault();
+    
+    const msg = document.getElementById("addBookMessage");
+    
+    // 1. Get values and immediately trim whitespace from the edges
+    const title = document.getElementById("newBookTitle").value.trim();
+    const author = document.getElementById("newBookAuthor").value.trim();
+    const genre = document.getElementById("newBookGenre").value.trim();
+    
+    // 2. Check if they are empty AFTER trimming (prevents spacebar bypassing)
+    if (!title || !author) {
+      msg.style.color = "red";
+      msg.textContent = "Title and Author cannot be empty or just spaces.";
+      return; 
+    }
+
+    // 3. Disable button to prevent double-clicks/spam submissions
+    const submitBtn = addBookForm.querySelector('button[type="submit"]');
+    submitBtn.disabled = true;
+    submitBtn.textContent = "Adding...";
+    msg.textContent = ""; 
+
+    try {
+      const res = await fetch(`/dashboard/my-books/${userId}`, {
+        method: "POST",
+        headers: { 
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}` 
+        },
+        // Send the safely trimmed values
+        body: JSON.stringify({ title, author, genre })
+      });
+
+      const result = await res.json();
+
+      if (result.success) {
+        msg.style.color = "green";
+        msg.textContent = "Book added successfully!";
+        addBookForm.reset();
+        loadMyBooks(); // Instantly refresh the list
+      } else {
+        msg.style.color = "red";
+        msg.textContent = result.message || "Failed to add book.";
+      }
+    } catch (err) {
+      console.error(err);
+      msg.style.color = "red";
+      msg.textContent = "Server error.";
+    } finally {
+      // 4. Re-enable the button regardless of success or failure
+      submitBtn.disabled = false;
+      submitBtn.textContent = "Add Book";
+    }
+  });
+}
+
+// Handle Deleting a Book with Safety Checks
+async function deleteMyBook(bookId) {
+  // 1. Client-side confirmation
+  if (!confirm("Are you sure you want to permanently delete this book?")) return;
+
+  try {
+    const res = await fetch(`/dashboard/my-books/${userId}/${bookId}`, {
+      method: "DELETE",
+      headers: { Authorization: `Bearer ${token}` }
+    });
+    const result = await res.json();
+
+    if (result.success) {
+      loadMyBooks(); // Instantly refresh the list to reflect deletion
+    } else {
+      // If the backend blocked it (e.g., currently borrowed), show the backend error message
+      alert(result.message || "Failed to delete book.");
+    }
+  } catch (err) {
+    console.error(err);
+    alert("Error deleting book.");
+  }
 }
