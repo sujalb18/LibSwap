@@ -2,10 +2,9 @@ const express = require('express');
 
 const authRoutes = require('./routes/authRoutes');
 const bookRoutes = require('./routes/bookRoutes');
-const dashboardRoutes =
-    require('./routes/dashboardRoutes.js');
-const moderationRoutes =
-    require('./routes/moderationRoutes.js');
+const dashboardRoutes = require('./routes/dashboardRoutes.js');
+const moderationRoutes = require('./routes/moderationRoutes.js');
+const swapRoutes = require('./routes/swapRoutes.js');   // ⭐ ADDED
 
 const app = express();
 
@@ -31,5 +30,8 @@ app.use('/dashboard', dashboardRoutes);
 
 // Staff content moderation routes
 app.use('/api/moderation', moderationRoutes);
+
+// ⭐ Swap routes (MANDATORY for integration)
+app.use('/swap', swapRoutes);
 
 module.exports = app;
