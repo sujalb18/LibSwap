@@ -210,4 +210,27 @@ describe('Dashboard My Books API automated tests', () => {
         const blockedBook = await Book.findById(book._id);
         expect(blockedBook).not.toBeNull();
     });
+
+    test('DELETE /dashboard/my-books/:userId/:bookId blocks hacker using victim URL with hacker token', async () => {
+        // Create a book owned by the primary student
+        const book = await Book.create({
+            title: 'Catch-22',
+            author: 'Joseph Heller',
+            ownerId: studentUserId
+        });
+
+        // The hacker tries to spoof the URL using the victim's studentUserId, 
+        // but their Authorization header contains the hackerToken.
+        const response = await request(app)
+            .delete(`/dashboard/my-books/${studentUserId}/${book._id}`)
+            .set('Authorization', `Bearer ${hackerToken}`)
+            .expect(403); // Our new logic should catch this and return a 403 Forbidden
+
+        expect(response.body.success).toBe(false);
+        expect(response.body.message).toMatch(/unauthorized/i);
+
+        // Verify the book is still safely in the database
+        const safeBook = await Book.findById(book._id);
+        expect(safeBook).not.toBeNull();
+    });
 });

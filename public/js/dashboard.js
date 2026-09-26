@@ -1,6 +1,6 @@
-// ⭐ Read user from localStorage (set during login)
-const demoUser = JSON.parse(localStorage.getItem("movieflixUser"));
-const token = localStorage.getItem("movieflixToken");
+// ⭐ Read user from localStorage (using the new shared auth keys)
+const demoUser = JSON.parse(localStorage.getItem("user"));
+const token = localStorage.getItem("token");
 const userId = demoUser.id;
 
 // ⭐ Load initial sections
@@ -19,7 +19,8 @@ function loadStudentInfo() {
     <p><strong>Name:</strong> ${demoUser.fullName}</p>
     <p><strong>Username:</strong> ${demoUser.username}</p>
     <p><strong>Email:</strong> ${demoUser.email}</p>
-    <p><strong>Role:</strong> Student</p>
+    <!-- Use the dynamic role from the token/user object instead of hardcoding "Student" -->
+    <p><strong>Role:</strong> ${demoUser.role}</p> 
   `;
 }
 

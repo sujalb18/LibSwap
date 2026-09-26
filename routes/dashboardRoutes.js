@@ -1,6 +1,7 @@
 const express = require("express");
 const Book = require("../models/Book.js");
 const SwapRequest = require("../models/SwapRequest.js");
+const authMiddleware = require("../middleware/authMiddleware.js");
 
 const router = express.Router();
 
@@ -91,17 +92,28 @@ router.get("/swap-sent/:userId", async (req, res) => {
 /* -------------------------------------------
    ADD A PERSONAL BOOK (Owned by User)
 -------------------------------------------- */
-router.post("/my-books/:userId", async (req, res) => {
+router.post("/my-books/:userId", authMiddleware, async (req, res) => {
   try {
+    // use the ID from the verified token
+    const tokenUserId = req.user.userId;
     const { userId } = req.params;
+
+    // ownership check: Prevent users from acting on behalf of other IDs in the URL
+    if (tokenUserId !== userId) {
+      return res.status(403).json({ 
+        success: false, 
+        message: "Unauthorized: You can only add books to your own account." 
+      });
+    }
+
     let { title, author, genre } = req.body;
 
-    // 1. Strict Type Checking (Prevents crashes from invalid data types)
+    // strict Type checking (prevents crashes from invalid data types)
     if (typeof title !== 'string' || typeof author !== 'string') {
       return res.status(400).json({ success: false, message: "Invalid data format." });
     }
 
-    // 2. Trim spaces and verify they aren't empty
+    // trim spaces and verify they aren't empty
     title = title.trim();
     author = author.trim();
     genre = typeof genre === 'string' ? genre.trim() : "";
@@ -110,23 +122,23 @@ router.post("/my-books/:userId", async (req, res) => {
       return res.status(400).json({ success: false, message: "Title and author cannot be empty or just spaces." });
     }
 
-    // 3. Enforce Max Lengths on the server side
+    // enforce Max Lengths on the server side
     if (title.length > 100 || author.length > 50 || genre.length > 30) {
       return res.status(400).json({ success: false, message: "Input exceeds maximum allowed length." });
     }
 
-    // 4. Check for exact duplicates by this user
-    const existingBook = await Book.findOne({ title, author, ownerId: userId });
+    // check for exact duplicates by this user (using the verified tokenUserId)
+    const existingBook = await Book.findOne({ title, author, ownerId: tokenUserId });
     if (existingBook) {
       return res.status(400).json({ success: false, message: "You have already added this book." });
     }
 
-    // 5. Save the clean data
+    //save the clean data
     const newBook = new Book({
       title,
       author,
       genre,
-      ownerId: userId,
+      ownerId: tokenUserId,
       available: true
     });
 
@@ -141,12 +153,22 @@ router.post("/my-books/:userId", async (req, res) => {
 /* -------------------------------------------
    DELETE A PERSONAL BOOK
 -------------------------------------------- */
-router.delete("/my-books/:userId/:bookId", async (req, res) => {
+router.delete("/my-books/:userId/:bookId", authMiddleware, async (req, res) => {
   try {
+    // use the ID from the verified token
+    const tokenUserId = req.user.userId;
     const { userId, bookId } = req.params;
 
-    // verify book exists and user actually owns it
-    const book = await Book.findOne({ _id: bookId, ownerId: userId });
+    // ownership check: Verify token matches the URL
+    if (tokenUserId !== userId) {
+      return res.status(403).json({ 
+        success: false, 
+        message: "Unauthorized: You can only delete your own books." 
+      });
+    }
+
+    // verify book exists and user actually owns it (using tokenUserId)
+    const book = await Book.findOne({ _id: bookId, ownerId: tokenUserId });
     
     if (!book) {
       return res.status(404).json({ success: false, message: "Book not found or permission denied." });
