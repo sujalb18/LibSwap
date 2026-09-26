@@ -41,7 +41,6 @@ exports.acceptSwapRequest = async (req, res) => {
       return res.status(400).json({ success: false, message: "Swap already processed" });
     }
 
-    // Swap book ownership
     const requestedBook = swap.requestedBookId;
     const offeredBook = swap.offeredBookId;
 
@@ -85,7 +84,7 @@ exports.rejectSwapRequest = async (req, res) => {
   }
 };
 
-// CANCEL SWAP REQUEST (sender cancels)
+// CANCEL SWAP REQUEST
 exports.cancelSwapRequest = async (req, res) => {
   try {
     const swapId = req.params.id;
@@ -109,17 +108,15 @@ exports.cancelSwapRequest = async (req, res) => {
   }
 };
 
-// GET ALL SWAP REQUESTS (sent + received)
+// GET ALL SWAP REQUESTS
 exports.getAllSwapRequests = async (req, res) => {
   try {
     const userId = req.params.userId;
 
-    // Sent requests (you are the requester)
     const sent = await SwapRequest.find({ requesterId: userId })
       .populate("requestedBookId")
       .populate("offeredBookId");
 
-    // Received requests (you are the owner)
     const received = await SwapRequest.find({ ownerId: userId })
       .populate("requestedBookId")
       .populate("offeredBookId");
@@ -130,11 +127,9 @@ exports.getAllSwapRequests = async (req, res) => {
     });
 
   } catch (err) {
-    console.error("Swap fetch error:", err);
     return res.status(500).json({
       success: false,
       message: "Server error"
     });
   }
 };
-

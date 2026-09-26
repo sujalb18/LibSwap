@@ -1,10 +1,9 @@
-// ⭐ Read user from localStorage (same as dashboard)
-const demoUser = JSON.parse(localStorage.getItem("user"));
+// ⭐ Read user from shared login localStorage
+const userId = localStorage.getItem("userId");
 const token = localStorage.getItem("token");
-const userId = demoUser._id;
 
 // Redirect if not logged in
-if (!demoUser || !token) {
+if (!userId || !token) {
   window.location.href = "login.html";
 }
 
@@ -14,7 +13,7 @@ document.getElementById("backBtn").addEventListener("click", () => {
 
 let selectedBookId = null;
 let selectedMyBookId = null;
-let selectedBookOwnerId = null;   // ⭐ FIXED
+let selectedBookOwnerId = null;
 
 // Load available books
 loadAvailableBooks();
@@ -22,24 +21,25 @@ loadAvailableBooks();
 // Load my books
 loadMyBooks();
 
-// ---------- Load Available Books ----------
+/* -------------------------------------------
+   LOAD AVAILABLE BOOKS
+-------------------------------------------- */
 async function loadAvailableBooks() {
   const container = document.getElementById("availableBooks");
   container.innerHTML = "Loading...";
 
   try {
-    const res = await fetch(`/api/books/all`, {
+    const res = await fetch(`/api/books`, {
       headers: { Authorization: `Bearer ${token}` }
     });
 
-    const result = await res.json();
+    const books = await res.json();
 
-    // ⭐ FIXED ownerId comparison
-    const books = result.data.filter(b => b.ownerId.toString() !== userId);
+    const filtered = books.filter(b => b.ownerId.toString() !== userId);
 
     container.innerHTML = "";
 
-    books.forEach(book => {
+    filtered.forEach(book => {
       const div = document.createElement("div");
       div.className = "book-card";
       div.innerHTML = `
@@ -50,7 +50,7 @@ async function loadAvailableBooks() {
 
       div.querySelector("button").addEventListener("click", () => {
         selectedBookId = book._id;
-        selectedBookOwnerId = book.ownerId;   // ⭐ FIXED
+        selectedBookOwnerId = book.ownerId;
         highlightSelection(container, div);
         enableSendButton();
       });
@@ -63,7 +63,9 @@ async function loadAvailableBooks() {
   }
 }
 
-// ---------- Load My Books ----------
+/* -------------------------------------------
+   LOAD MY BOOKS
+-------------------------------------------- */
 async function loadMyBooks() {
   const container = document.getElementById("myBooks");
   container.innerHTML = "Loading...";
@@ -101,24 +103,30 @@ async function loadMyBooks() {
   }
 }
 
-// ---------- Highlight Selected Card ----------
+/* -------------------------------------------
+   HIGHLIGHT SELECTED CARD
+-------------------------------------------- */
 function highlightSelection(container, selectedDiv) {
   [...container.children].forEach(div => div.classList.remove("selected"));
   selectedDiv.classList.add("selected");
 }
 
-// ---------- Enable Send Button ----------
+/* -------------------------------------------
+   ENABLE SEND BUTTON
+-------------------------------------------- */
 function enableSendButton() {
   const btn = document.getElementById("sendRequestBtn");
   btn.disabled = !(selectedBookId && selectedMyBookId);
 }
 
-// ---------- Send Swap Request ----------
+/* -------------------------------------------
+   SEND SWAP REQUEST
+-------------------------------------------- */
 document.getElementById("sendRequestBtn").addEventListener("click", async () => {
   const statusMsg = document.getElementById("statusMsg");
 
   try {
-    const res = await fetch(`/api/swap/send`, {
+    const res = await fetch(`/swap/send`, {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
@@ -128,7 +136,7 @@ document.getElementById("sendRequestBtn").addEventListener("click", async () => 
         requesterId: userId,
         requestedBookId: selectedBookId,
         offeredBookId: selectedMyBookId,
-        ownerId: selectedBookOwnerId   // ⭐ FIXED
+        ownerId: selectedBookOwnerId
       })
     });
 
@@ -136,6 +144,7 @@ document.getElementById("sendRequestBtn").addEventListener("click", async () => 
 
     if (!result.success) {
       statusMsg.textContent = result.message;
+      statusMsg.style.color = "red";
       return;
     }
 
@@ -144,5 +153,6 @@ document.getElementById("sendRequestBtn").addEventListener("click", async () => 
 
   } catch (err) {
     statusMsg.textContent = "Error sending request.";
+    statusMsg.style.color = "red";
   }
 });
