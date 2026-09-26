@@ -1,33 +1,41 @@
-// ⭐ Read user details from shared login localStorage
-const userId = localStorage.getItem("userId");
+// read user securely from localStorage
+const userString = localStorage.getItem("user");
 const token = localStorage.getItem("token");
-const fullName = localStorage.getItem("fullName");
-const username = localStorage.getItem("username");
-const email = localStorage.getItem("email");
-const role = localStorage.getItem("role");
 
-// Redirect if not logged in
-if (!userId || !token) {
+// redirect if not logged in, change to landing page/or start page
+if (!userString || !token) {
   window.location.href = "login.html";
 }
 
-// Load dashboard sections
+// parse the user object safely
+const currentUser = JSON.parse(userString);
+const userId = currentUser.id; 
+
+// load initial sections
 loadStudentInfo();
 loadBorrowedBooks();
 loadReservations();
 loadSwapRequests();
 
 /* -------------------------------------------
-   STUDENT INFO
+   STUDENT INFO (Secured against XSS)
 -------------------------------------------- */
 function loadStudentInfo() {
   const container = document.getElementById("student-details");
+  
+  // Build the HTML structure safely (NO user variables here)
   container.innerHTML = `
-    <p><strong>Name:</strong> ${fullName}</p>
-    <p><strong>Username:</strong> ${username}</p>
-    <p><strong>Email:</strong> ${email}</p>
-    <p><strong>Role:</strong> ${role}</p>
+    <p><strong>Name:</strong> <span id="ui-name"></span></p>
+    <p><strong>Username:</strong> <span id="ui-username"></span></p>
+    <p><strong>Email:</strong> <span id="ui-email"></span></p>
+    <p><strong>Role:</strong> <span id="ui-role"></span></p>
   `;
+
+  // Inject the data using textContent to prevent script execution
+  document.getElementById("ui-name").textContent = currentUser.fullName;
+  document.getElementById("ui-username").textContent = currentUser.username;
+  document.getElementById("ui-email").textContent = currentUser.email;
+  document.getElementById("ui-role").textContent = currentUser.role;
 }
 
 /* -------------------------------------------
@@ -94,8 +102,8 @@ async function loadSwapRequests() {
   const receivedList = document.getElementById("swap-received-list");
 
   try {
-    // ⭐ Correct route
-    const res = await fetch(`/swap/all/${userId}`, {
+    // changed route to /swap/all (removed ${userId} parameter)
+    const res = await fetch(`/swap/all`, {
       headers: { Authorization: `Bearer ${token}` }
     });
 

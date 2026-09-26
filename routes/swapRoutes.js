@@ -9,6 +9,6 @@ router.post("/accept/:id", authMiddleware, swapController.acceptSwapRequest);
 router.post("/reject/:id", authMiddleware, swapController.rejectSwapRequest);
 router.post("/cancel/:id", authMiddleware, swapController.cancelSwapRequest);
 
-router.get("/all/:userId", authMiddleware, swapController.getAllSwapRequests);
+router.get("/all", authMiddleware, swapController.getAllSwapRequests);
 
 module.exports = router;
