@@ -8,8 +8,8 @@ async function seedStaff() {
     try {
         await mongoose.connect(process.env.MONGODB_URI);
 
-        const email = 'staff@libswap.com';
-        const password = 'Staff123456';
+        const email = process.env.STAFF_EMAIL;
+        const password = process.env.STAFF_PASSWORD;
 
         const existingStaff = await User.findOne({ email });
 
