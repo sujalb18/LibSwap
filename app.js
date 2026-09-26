@@ -2,6 +2,8 @@ const express = require('express');
 
 const authRoutes = require('./routes/authRoutes');
 const bookRoutes = require('./routes/bookRoutes');
+const bookRequestRoutes = require('./routes/bookRequestRoutes');
+const notificationRoutes = require('./routes/notificationRoutes');
 const dashboardRoutes =
     require('./routes/dashboardRoutes.js');
 const moderationRoutes =
@@ -25,6 +27,12 @@ app.use('/api/auth', authRoutes);
 
 // Catalogue and book management routes
 app.use('/api/books', bookRoutes);
+
+// Book request routes - ask for a book that isn't in the catalogue
+app.use('/api/book-requests', bookRequestRoutes);
+
+// Notification routes - library and book-swap activity alerts
+app.use('/api/notifications', notificationRoutes);
 
 // Dashboard API routes
 app.use('/dashboard', dashboardRoutes);
