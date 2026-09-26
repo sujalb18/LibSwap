@@ -1,0 +1,90 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <title>LibSwap Dashboard</title>
+  <link rel="stylesheet" href="/css/dashboard.css">
+</head>
+
+<body>
+
+  <!-- Header -->
+  <header class="header">
+    <div class="logo">LibSwap</div>
+    <div class="tagline">Smart Library Management & Book Swapping System</div>
+  </header>
+
+  <!-- Sidebar -->
+  <nav class="sidebar">
+    <ul>
+      <li data-section="student-info">Your Info</li>
+      <li data-section="borrowed-books">Borrowed Books</li>
+      <li data-section="reservations">Your Reservations</li>
+      <li data-section="swap-requests">Swap Requests</li>
+    </ul>
+  </nav>
+
+  <!-- Main Content -->
+  <main class="content">
+
+    <!-- Student Info -->
+    <section id="student-info" class="section active">
+      <h2>Your Info</h2>
+      <div id="student-details"></div>
+    </section>
+
+    <!-- Borrowed Books -->
+    <section id="borrowed-books" class="section">
+      <h2>Borrowed Books</h2>
+      <button id="loadBorrowBooksBtn" class="action-btn">Borrow a Book</button>
+      <ul id="borrowed-list"></ul>
+    </section>
+
+    <!-- Reservations -->
+    <section id="reservations" class="section">
+      <h2>Your Reservations</h2>
+      <button id="loadReservationBooksBtn" class="action-btn">Reserve a Book</button>
+      <ul id="reservation-list"></ul>
+    </section>
+
+    <!-- Swap Requests -->
+    <section id="swap-requests" class="section">
+      <h2>Swap Requests</h2>
+
+      <!-- Button to open swap.html -->
+      <button class="action-btn" onclick="window.location.href='swap.html'">
+        Request a Swap
+      </button>
+
+      <!-- Sent Requests -->
+      <h3>Requests You Sent</h3>
+      <ul id="swap-sent-list" class="swap-list"></ul>
+
+      <!-- Received Requests -->
+      <h3>Requests You Received</h3>
+      <ul id="swap-received-list" class="swap-list"></ul>
+    </section>
+
+  </main>
+
+  <script src="/js/dashboard.js"></script>
+
+  <!-- Sidebar Navigation -->
+  <script>
+    document.querySelectorAll(".sidebar li").forEach(item => {
+      item.addEventListener("click", () => {
+        const target = item.getAttribute("data-section");
+        if (!target) return;
+
+        document.querySelectorAll(".section")
+          .forEach(sec => sec.classList.remove("active"));
+
+        document.getElementById(target).classList.add("active");
+      });
+    });
+  </script>
+
+</body>
+
+</html>

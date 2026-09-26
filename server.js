@@ -1,45 +1,44 @@
-const express = require('express');
+const http = require('http');
 const mongoose = require('mongoose');
-const authRoutes = require('./routes/authRoutes');
-const bookRoutes = require('./routes/bookRoutes');
-const bookRequestRoutes = require('./routes/bookRequestRoutes');
-const notificationRoutes = require('./routes/notificationRoutes');
+const { Server } = require('socket.io');
+
+const app = require('./app');
 
 require('dotenv').config();
 
-const app = express();
-
-app.use(express.json());
-
-// This lets Express show frontend files from the public folder
-app.use(express.static('public'));
-
 const PORT = process.env.PORT || 3000;
 
-app.get('/', (req, res) => {
-    res.send('LibSwap server is running');
+// Create an HTTP server using our Express application
+const server = http.createServer(app);
+
+// Attach Socket.IO to the same server
+const io = new Server(server);
+
+// Make Socket.IO available inside Express controllers
+app.set('io', io);
+
+// Optional message when a browser connects
+io.on('connection', (socket) => {
+    console.log('A client connected for real-time updates');
+
+    socket.on('disconnect', () => {
+        console.log('A client disconnected');
+    });
 });
 
-// Authentication routes from the shared project
-app.use('/api/auth', authRoutes);
-
-// Catalogue routes for US02
-app.use('/api/books', bookRoutes);
-
-// Book request routes - ask for a book that isn't in the catalogue
-app.use('/api/book-requests', bookRequestRoutes);
-
-// Notification routes - library and book-swap activity alerts
-app.use('/api/notifications', notificationRoutes);
-
+// Connect to MongoDB first
 mongoose.connect(process.env.MONGODB_URI)
     .then(() => {
         console.log('Connected to MongoDB');
 
-        app.listen(PORT, () => {
+        // Start the HTTP + Socket.IO server
+        server.listen(PORT, () => {
             console.log(`Server is running on http://localhost:${PORT}`);
         });
     })
     .catch((error) => {
-        console.error('MongoDB connection failed:', error.message);
+        console.error(
+            'MongoDB connection failed:',
+            error.message
+        );
     });
