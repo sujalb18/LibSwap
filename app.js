@@ -2,7 +2,10 @@ const express = require('express');
 
 const authRoutes = require('./routes/authRoutes');
 const bookRoutes = require('./routes/bookRoutes');
-const dashboardRoutes = require('./routes/dashboardRoutes.js');
+const dashboardRoutes =
+    require('./routes/dashboardRoutes.js');
+const moderationRoutes =
+    require('./routes/moderationRoutes.js');
 
 const app = express();
 
@@ -25,5 +28,8 @@ app.use('/api/books', bookRoutes);
 
 // Dashboard API routes
 app.use('/dashboard', dashboardRoutes);
+
+// Staff content moderation routes
+app.use('/api/moderation', moderationRoutes);
 
 module.exports = app;
