@@ -11,7 +11,7 @@ const app = require('../app');
 
 const Review = require('../models/Review');
 const Book = require('../models/Book');
-const User = require('../model/User');
+const User = require('../models/User');
 
 
 // Give Jest enough time for the temporary MongoDB server
