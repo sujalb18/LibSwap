@@ -1,7 +1,15 @@
-// ⭐ Read user from localStorage (using the new shared auth keys)
-const demoUser = JSON.parse(localStorage.getItem("user"));
+// read user securely from localStorage
+const userString = localStorage.getItem("user");
 const token = localStorage.getItem("token");
-const userId = demoUser.id;
+
+// redirect if not logged in, change to landing page/or start page
+if (!userString || !token) {
+  window.location.href = "login.html";
+}
+
+// parse the user object safely
+const currentUser = JSON.parse(userString);
+const userId = currentUser.id; 
 
 // ⭐ Load initial sections
 loadMyBooks();
