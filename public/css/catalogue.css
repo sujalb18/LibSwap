@@ -472,3 +472,182 @@ main {
         width: 100%;
     }
 }
+
+/* =========================================
+   REVIEWS
+========================================= */
+
+.my-reviews-control {
+    margin-top: 15px;
+}
+
+.my-reviews-button {
+    padding: 10px 18px;
+    border: none;
+    border-radius: 7px;
+    background: #f0f3f7;
+    color: #1f4e79;
+    font-size: 14px;
+    font-weight: 600;
+    cursor: pointer;
+}
+
+.my-reviews-button:hover {
+    background: #e4e9ef;
+}
+
+
+/* Review summary */
+
+.reviews-summary {
+    padding: 15px;
+    margin-bottom: 20px;
+    border-radius: 10px;
+    background: #f7f9fb;
+}
+
+.average-rating {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.average-rating strong {
+    font-size: 28px;
+}
+
+.average-stars {
+    margin-left: 10px;
+    color: #f59e0b;
+    font-size: 22px;
+}
+
+.review-count {
+    margin: 6px 0 0;
+    color: #667085;
+    font-size: 13px;
+}
+
+
+/* Public reviews */
+
+.book-reviews-list {
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+}
+
+.public-review-card,
+.my-review-card {
+    padding: 18px;
+    border: 1px solid #e4e7ec;
+    border-radius: 10px;
+    background: white;
+}
+
+.public-review-top,
+.my-review-header {
+    display: flex;
+    justify-content: space-between;
+    gap: 15px;
+}
+
+.public-review-top h3,
+.my-review-header h3 {
+    margin: 0;
+    font-size: 16px;
+}
+
+.review-date {
+    margin: 4px 0 0;
+    color: #98a2b3;
+    font-size: 12px;
+}
+
+.public-review-rating,
+.my-review-stars {
+    color: #f59e0b;
+    white-space: nowrap;
+}
+
+.public-review-comment,
+.my-review-comment {
+    margin: 14px 0 0;
+    color: #475467;
+    line-height: 1.6;
+    font-size: 14px;
+}
+
+
+/* My review status */
+
+.review-status {
+    padding: 5px 9px;
+    border-radius: 999px;
+    font-size: 11px;
+    font-weight: 700;
+    text-transform: capitalize;
+    height: fit-content;
+}
+
+.review-status.pending {
+    background: #fff4e5;
+    color: #b54708;
+}
+
+.review-status.approved {
+    background: #ecfdf3;
+    color: #027a48;
+}
+
+.review-status.removed {
+    background: #fef3f2;
+    color: #b42318;
+}
+
+
+/* Actions */
+
+.my-review-actions {
+    display: flex;
+    gap: 8px;
+    margin-top: 16px;
+}
+
+.edit-review-button,
+.delete-review-button {
+    padding: 8px 14px;
+    border: none;
+    border-radius: 7px;
+    font-size: 13px;
+    font-weight: 600;
+    cursor: pointer;
+}
+
+.edit-review-button {
+    background: #eef4fb;
+    color: #1f4e79;
+}
+
+.delete-review-button {
+    background: #fef3f2;
+    color: #b42318;
+}
+
+.edit-review-button:hover {
+    background: #e3edf8;
+}
+
+.delete-review-button:hover {
+    background: #fee4e2;
+}
+
+
+/* Empty/loading */
+
+.empty-reviews,
+.reviews-loading {
+    padding: 25px;
+    text-align: center;
+    color: #667085;
+}

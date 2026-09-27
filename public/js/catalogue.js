@@ -153,7 +153,33 @@ const displayBooks = (books) => {
 
     </div>
 `;
+        document.addEventListener('click', (event) => {
 
+            const viewButton =
+                event.target.closest('.view-reviews-button');
+
+            if (!viewButton) {
+                return;
+            }
+
+            const bookId =
+                viewButton.dataset.bookId;
+
+            const book =
+                currentBooks.find(
+                    (item) => item._id === bookId
+                );
+
+            if (!book) {
+                return;
+            }
+
+            loadBookReviews(
+                bookId,
+                book.title,
+                book.author
+            );
+        });
         // Add the card to the page
         bookList.appendChild(card);
     });
@@ -514,5 +540,535 @@ reviewForm.addEventListener(
     }
 );
 
-// Load all books when the page first opens
+
+
+const viewReviewsModal =
+    document.getElementById('viewReviewsModal');
+
+const closeViewReviewsModal =
+    document.getElementById('closeViewReviewsModal');
+
+const viewReviewsBookTitle =
+    document.getElementById('viewReviewsBookTitle');
+
+const viewReviewsBookAuthor =
+    document.getElementById('viewReviewsBookAuthor');
+
+const reviewsSummary =
+    document.getElementById('reviewsSummary');
+
+const bookReviewsList =
+    document.getElementById('bookReviewsList');
+
+const myReviewsButton =
+    document.getElementById('myReviewsButton');
+
+const myReviewsModal =
+    document.getElementById('myReviewsModal');
+
+const closeMyReviewsModal =
+    document.getElementById('closeMyReviewsModal');
+
+const myReviewsList =
+    document.getElementById('myReviewsList');// Load all books when the page first opens
+
+const loadBookReviews = async (
+    bookId,
+    bookTitle,
+    bookAuthor
+) => {
+
+    viewReviewsBookTitle.textContent = bookTitle;
+    viewReviewsBookAuthor.textContent =
+        `by ${bookAuthor}`;
+
+    bookReviewsList.innerHTML =
+        '<p class="reviews-loading">Loading reviews...</p>';
+
+    reviewsSummary.innerHTML = '';
+
+    viewReviewsModal.classList.remove('hidden');
+
+    try {
+
+        const response = await fetch(
+            `/api/books/${bookId}/reviews`
+        );
+
+        const result = await response.json();
+
+        if (!response.ok) {
+            throw new Error(
+                result.message ||
+                'Unable to load reviews'
+            );
+        }
+
+        const reviews = Array.isArray(result.reviews)
+            ? result.reviews
+            : [];
+
+        if (reviews.length === 0) {
+
+            reviewsSummary.innerHTML =
+                '<p class="review-count">No approved reviews yet.</p>';
+
+            bookReviewsList.innerHTML =
+                '<div class="empty-reviews">No reviews available for this book.</div>';
+
+            return;
+        }
+
+        const totalRating = reviews.reduce(
+            (sum, review) =>
+                sum + Number(review.rating),
+            0
+        );
+
+        const averageRating =
+            totalRating / reviews.length;
+
+        reviewsSummary.innerHTML = `
+            <div class="average-rating">
+                <strong>${averageRating.toFixed(1)}</strong>
+                <span>/ 5</span>
+                <span class="average-stars">
+                    ${createStars(
+            Math.round(averageRating)
+        )}
+                </span>
+            </div>
+
+            <p class="review-count">
+                ${reviews.length}
+                ${reviews.length === 1 ? 'review' : 'reviews'}
+            </p>
+        `;
+
+        bookReviewsList.innerHTML = '';
+
+        reviews.forEach((review) => {
+
+            const card =
+                createBookReviewCard(review);
+
+            bookReviewsList.appendChild(card);
+        });
+
+    } catch (error) {
+
+        console.error(
+            'Load reviews error:',
+            error
+        );
+
+        bookReviewsList.innerHTML =
+            '<div class="empty-reviews">Unable to load reviews.</div>';
+    }
+};
+
+const createStars = (rating) => {
+    let stars = '';
+    for (let i = 1; i <= 5; i++) {
+
+        stars += i <= rating
+            ? '★'
+            : '☆';
+    }
+    return stars;
+};
+
+const createBookReviewCard = (review) => {
+    const card =
+        document.createElement('article');
+
+    card.className = 'public-review-card';
+
+    const reviewerName =
+        review.userId?.fullName ||
+        review.userId?.username ||
+        'LibSwap Student';
+
+    card.innerHTML = `
+        <div class="public-review-top">
+
+            <div>
+                <h3>${reviewerName}</h3>
+
+                <p class="review-date">
+                    ${review.createdAt
+            ? new Date(
+                review.createdAt
+            ).toLocaleDateString()
+            : ''}
+                </p>
+            </div>
+
+            <div class="public-review-rating">
+                ${createStars(
+                Number(review.rating)
+            )}
+            </div>
+
+        </div>
+
+        <p class="public-review-comment">
+            ${escapeHtml(review.comment)}
+        </p>
+    `;
+
+    return card;
+};
+
+const escapeHtml = (text) => {
+
+    const div = document.createElement('div');
+
+    div.textContent = text || '';
+
+    return div.innerHTML;
+};
+
+closeViewReviewsModal.addEventListener(
+    'click',
+    () => {
+        viewReviewsModal.classList.add(
+            'hidden'
+        );
+    }
+);
+
+viewReviewsModal.addEventListener(
+    'click',
+    (event) => {
+
+        if (event.target === viewReviewsModal) {
+            viewReviewsModal.classList.add(
+                'hidden'
+            );
+        }
+    }
+);
+
+const loadMyReviews = async () => {
+
+    const token =
+        localStorage.getItem('token');
+
+    if (!token) {
+        window.location.href =
+            '/login.html';
+
+        return;
+    }
+
+    myReviewsList.innerHTML =
+        '<p class="reviews-loading">Loading your reviews...</p>';
+
+    myReviewsModal.classList.remove('hidden');
+
+    try {
+
+        const response = await fetch(
+            '/api/reviews/my',
+            {
+                headers: {
+                    Authorization:
+                        `Bearer ${token}`
+                }
+            }
+        );
+
+        const result =
+            await response.json();
+
+        if (!response.ok) {
+            throw new Error(
+                result.message ||
+                'Unable to load your reviews'
+            );
+        }
+
+        const reviews =
+            Array.isArray(result.reviews)
+                ? result.reviews
+                : [];
+
+        if (reviews.length === 0) {
+
+            myReviewsList.innerHTML =
+                '<div class="empty-reviews">You have not submitted any reviews yet.</div>';
+
+            return;
+        }
+
+        myReviewsList.innerHTML = '';
+
+        reviews.forEach((review) => {
+
+            const card =
+                createMyReviewCard(review);
+
+            myReviewsList.appendChild(card);
+        });
+
+    } catch (error) {
+
+        console.error(
+            'Load my reviews error:',
+            error
+        );
+
+        myReviewsList.innerHTML =
+            '<div class="empty-reviews">Unable to load your reviews.</div>';
+    }
+};
+
+
+const createMyReviewCard = (review) => {
+
+    const card =
+        document.createElement('article');
+
+    card.className = 'my-review-card';
+
+    const bookTitle =
+        review.bookId?.title ||
+        'Unknown book';
+
+    const status =
+        review.moderationStatus ||
+        'pending';
+
+    card.innerHTML = `
+        <div class="my-review-header">
+
+            <div>
+                <h3>${bookTitle}</h3>
+
+                <div class="my-review-stars">
+                    ${createStars(
+                        Number(review.rating)
+                    )}
+                </div>
+            </div>
+
+            <span class="review-status ${status}">
+                ${status}
+            </span>
+
+        </div>
+
+        <p class="my-review-comment">
+            ${escapeHtml(review.comment)}
+        </p>
+
+        <div class="my-review-actions">
+
+            <button
+                type="button"
+                class="edit-review-button"
+                data-review-id="${review._id}"
+            >
+                Edit
+            </button>
+
+            <button
+                type="button"
+                class="delete-review-button"
+                data-review-id="${review._id}"
+            >
+                Delete
+            </button>
+
+        </div>
+    `;
+
+    return card;
+};
+
+myReviewsButton.addEventListener(
+    'click',
+    loadMyReviews
+);
+
+closeMyReviewsModal.addEventListener(
+    'click',
+    () => {
+        myReviewsModal.classList.add(
+            'hidden'
+        );
+    }
+);
+
+myReviewsModal.addEventListener(
+    'click',
+    (event) => {
+
+        if (event.target === myReviewsModal) {
+            myReviewsModal.classList.add(
+                'hidden'
+            );
+        }
+    }
+);
+
+document.addEventListener('click', async (event) => {
+
+    const editButton =
+        event.target.closest('.edit-review-button');
+
+    if (!editButton) {
+        return;
+    }
+
+    const reviewId =
+        editButton.dataset.reviewId;
+
+    const newRating =
+        prompt(
+            'Enter new rating (1-5):'
+        );
+
+    if (newRating === null) {
+        return;
+    }
+
+    const numericRating =
+        Number(newRating);
+
+    if (
+        !Number.isInteger(numericRating) ||
+        numericRating < 1 ||
+        numericRating > 5
+    ) {
+
+        alert(
+            'Rating must be an integer between 1 and 5.'
+        );
+
+        return;
+    }
+
+    const newComment =
+        prompt(
+            'Enter your new review:'
+        );
+
+    if (newComment === null) {
+        return;
+    }
+
+    const token =
+        localStorage.getItem('token');
+
+    try {
+
+        const response = await fetch(
+            `/api/reviews/${reviewId}`,
+            {
+                method: 'PATCH',
+
+                headers: {
+                    'Content-Type':
+                        'application/json',
+
+                    Authorization:
+                        `Bearer ${token}`
+                },
+
+                body: JSON.stringify({
+                    rating: numericRating,
+                    comment:
+                        newComment.trim()
+                })
+            }
+        );
+
+        const result =
+            await response.json();
+
+        if (!response.ok) {
+            throw new Error(
+                result.message ||
+                'Unable to update review'
+            );
+        }
+
+        alert(
+            'Review updated successfully and sent for moderation.'
+        );
+
+        await loadMyReviews();
+
+    } catch (error) {
+
+        alert(error.message);
+
+        console.error(error);
+    }
+});
+
+document.addEventListener('click', async (event) => {
+
+    const deleteButton =
+        event.target.closest('.delete-review-button');
+
+    if (!deleteButton) {
+        return;
+    }
+
+    const reviewId =
+        deleteButton.dataset.reviewId;
+
+    const confirmed =
+        confirm(
+            'Are you sure you want to delete this review?'
+        );
+
+    if (!confirmed) {
+        return;
+    }
+
+    const token =
+        localStorage.getItem('token');
+
+    try {
+
+        const response = await fetch(
+            `/api/reviews/${reviewId}`,
+            {
+                method: 'DELETE',
+
+                headers: {
+                    Authorization:
+                        `Bearer ${token}`
+                }
+            }
+        );
+
+        const result =
+            await response.json();
+
+        if (!response.ok) {
+            throw new Error(
+                result.message ||
+                'Unable to delete review'
+            );
+        }
+
+        alert(
+            'Review deleted successfully.'
+        );
+
+        await loadMyReviews();
+
+    } catch (error) {
+
+        alert(error.message);
+
+        console.error(error);
+    }
+});
+
 loadBooks();

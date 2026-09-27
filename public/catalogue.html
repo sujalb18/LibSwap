@@ -67,6 +67,12 @@
                     </select>
                 </div>
 
+                <div class="my-reviews-control">
+                    <button type="button" id="myReviewsButton" class="my-reviews-button">
+                        My Reviews
+                    </button>
+                </div>
+
             </div>
         </section>
 
@@ -159,6 +165,60 @@
         </div>
 
     </main>
+
+    <!-- View Reviews Modal -->
+    <div id="viewReviewsModal" class="review-modal hidden">
+
+        <div class="review-modal-content">
+
+            <button type="button" id="closeViewReviewsModal" class="review-close" aria-label="Close reviews">
+                ×
+            </button>
+
+            <div class="review-modal-header">
+                <span class="review-label">LIBSWAP REVIEWS</span>
+
+                <h2 id="viewReviewsBookTitle">
+                    Book Reviews
+                </h2>
+
+                <p id="viewReviewsBookAuthor"></p>
+            </div>
+
+            <div id="reviewsSummary" class="reviews-summary">
+            </div>
+
+            <div id="bookReviewsList" class="book-reviews-list">
+            </div>
+
+        </div>
+
+    </div>
+
+
+    <!-- My Reviews Modal -->
+    <div id="myReviewsModal" class="review-modal hidden">
+
+        <div class="review-modal-content">
+
+            <button type="button" id="closeMyReviewsModal" class="review-close" aria-label="Close my reviews">
+                ×
+            </button>
+
+            <div class="review-modal-header">
+                <span class="review-label">MY LIBSWAP REVIEWS</span>
+
+                <h2>My Reviews</h2>
+
+                <p>Manage reviews you have submitted.</p>
+            </div>
+
+            <div id="myReviewsList" class="my-reviews-list">
+            </div>
+
+        </div>
+
+    </div>
 
     <!-- Socket.IO lets the catalogue receive real-time book updates -->
     <script src="/socket.io/socket.io.js"></script>
