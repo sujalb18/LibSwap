@@ -100,6 +100,7 @@ async function loadSwapRequests() {
   const receivedList = document.getElementById("swap-received-list");
 
   try {
+    // ⭐ Correct route — no userId in URL
     const res = await fetch(`/swap/all`, {
       headers: { Authorization: `Bearer ${token}` }
     });
