@@ -19,18 +19,26 @@ loadReservations();
 loadSwapRequests();
 
 /* -------------------------------------------
-   STUDENT INFO
+   STUDENT INFO (Secured against XSS)
 -------------------------------------------- */
 function loadStudentInfo() {
   const container = document.getElementById("student-details");
+  
+  // Build the HTML structure safely (NO user variables here)
   container.innerHTML = `
-    <p><strong>Name:</strong> ${demoUser.fullName}</p>
-    <p><strong>Username:</strong> ${demoUser.username}</p>
-    <p><strong>Email:</strong> ${demoUser.email}</p>
-    <!-- Use the dynamic role from the token/user object instead of hardcoding "Student" -->
-    <p><strong>Role:</strong> ${demoUser.role}</p> 
+    <p><strong>Name:</strong> <span id="ui-name"></span></p>
+    <p><strong>Username:</strong> <span id="ui-username"></span></p>
+    <p><strong>Email:</strong> <span id="ui-email"></span></p>
+    <p><strong>Role:</strong> <span id="ui-role"></span></p>
   `;
+
+  // Inject the data using textContent to prevent script execution
+  document.getElementById("ui-name").textContent = currentUser.fullName;
+  document.getElementById("ui-username").textContent = currentUser.username;
+  document.getElementById("ui-email").textContent = currentUser.email;
+  document.getElementById("ui-role").textContent = currentUser.role;
 }
+
 
 /* -------------------------------------------
    BORROWED BOOKS
