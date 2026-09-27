@@ -41,7 +41,7 @@ function loadStudentInfo() {
 
 
 /* -------------------------------------------
-   BORROWED BOOKS
+   BORROWED BOOKS (Secured against XSS)
 -------------------------------------------- */
 async function loadBorrowedBooks() {
   const list = document.getElementById("borrowed-list");
@@ -60,7 +60,9 @@ async function loadBorrowedBooks() {
 
     list.innerHTML = "";
     result.data.forEach(book => {
-      list.innerHTML += `<li>${book.title} by ${book.author}</li>`;
+      const li = document.createElement("li");
+      li.textContent = `${book.title} by ${book.author}`; // Safe injection
+      list.appendChild(li);
     });
 
   } catch (err) {
@@ -69,7 +71,7 @@ async function loadBorrowedBooks() {
 }
 
 /* -------------------------------------------
-   RESERVATIONS
+   RESERVATIONS (Secured against XSS)
 -------------------------------------------- */
 async function loadReservations() {
   const list = document.getElementById("reservation-list");
@@ -88,7 +90,9 @@ async function loadReservations() {
 
     list.innerHTML = "";
     result.data.forEach(book => {
-      list.innerHTML += `<li>${book.title} by ${book.author}</li>`;
+      const li = document.createElement("li");
+      li.textContent = `${book.title} by ${book.author}`; // Safe injection
+      list.appendChild(li);
     });
 
   } catch (err) {
@@ -97,14 +101,13 @@ async function loadReservations() {
 }
 
 /* -------------------------------------------
-   SWAP REQUESTS (Sent + Received)
+   SWAP REQUESTS (Secured against XSS)
 -------------------------------------------- */
 async function loadSwapRequests() {
   const sentList = document.getElementById("swap-sent-list");
   const receivedList = document.getElementById("swap-received-list");
 
   try {
-    // ⭐ Correct route — no userId in URL
     const res = await fetch(`/swap/all`, {
       headers: { Authorization: `Bearer ${token}` }
     });
@@ -125,17 +128,32 @@ async function loadSwapRequests() {
     } else {
       sentList.innerHTML = "";
       sent.forEach(req => {
-        sentList.innerHTML += `
-          <li class="swap-card">
-            <p><strong>You requested:</strong> ${req.requestedBookId.title}</p>
-            <p><strong>You offered:</strong> ${req.offeredBookId.title}</p>
-            <p>Status: ${req.status}</p>
+        const li = document.createElement("li");
+        li.className = "swap-card";
 
-            ${req.status === "pending" ? `
-              <button class="cancel-btn" data-id="${req._id}">Cancel</button>
-            ` : ""}
-          </li>
-        `;
+        // Safely build the contents
+        const p1 = document.createElement("p");
+        p1.innerHTML = "<strong>You requested:</strong> ";
+        p1.appendChild(document.createTextNode(req.requestedBookId.title));
+
+        const p2 = document.createElement("p");
+        p2.innerHTML = "<strong>You offered:</strong> ";
+        p2.appendChild(document.createTextNode(req.offeredBookId.title));
+
+        const p3 = document.createElement("p");
+        p3.innerHTML = `<strong>Status:</strong> ${req.status}`;
+
+        li.append(p1, p2, p3);
+
+        if (req.status === "pending") {
+          const btn = document.createElement("button");
+          btn.className = "cancel-btn";
+          btn.dataset.id = req._id;
+          btn.textContent = "Cancel";
+          li.appendChild(btn);
+        }
+
+        sentList.appendChild(li);
       });
     }
 
@@ -145,18 +163,37 @@ async function loadSwapRequests() {
     } else {
       receivedList.innerHTML = "";
       received.forEach(req => {
-        receivedList.innerHTML += `
-          <li class="swap-card">
-            <p><strong>Requested from you:</strong> ${req.requestedBookId.title}</p>
-            <p><strong>They offered:</strong> ${req.offeredBookId.title}</p>
-            <p>Status: ${req.status}</p>
+        const li = document.createElement("li");
+        li.className = "swap-card";
 
-            ${req.status === "pending" ? `
-              <button class="accept-btn" data-id="${req._id}">Accept</button>
-              <button class="reject-btn" data-id="${req._id}">Reject</button>
-            ` : ""}
-          </li>
-        `;
+        const p1 = document.createElement("p");
+        p1.innerHTML = "<strong>Requested from you:</strong> ";
+        p1.appendChild(document.createTextNode(req.requestedBookId.title));
+
+        const p2 = document.createElement("p");
+        p2.innerHTML = "<strong>They offered:</strong> ";
+        p2.appendChild(document.createTextNode(req.offeredBookId.title));
+
+        const p3 = document.createElement("p");
+        p3.innerHTML = `<strong>Status:</strong> ${req.status}`;
+
+        li.append(p1, p2, p3);
+
+        if (req.status === "pending") {
+          const acceptBtn = document.createElement("button");
+          acceptBtn.className = "accept-btn";
+          acceptBtn.dataset.id = req._id;
+          acceptBtn.textContent = "Accept";
+          
+          const rejectBtn = document.createElement("button");
+          rejectBtn.className = "reject-btn";
+          rejectBtn.dataset.id = req._id;
+          rejectBtn.textContent = "Reject";
+
+          li.append(acceptBtn, rejectBtn);
+        }
+
+        receivedList.appendChild(li);
       });
     }
 
@@ -207,7 +244,7 @@ function attachSwapButtons() {
 }
 
 /* -------------------------------------------
-   MY BOOKS (Owned) - FETCH, ADD, & DELETE
+   MY BOOKS (Owned) - FETCH, ADD, & DELETE (Secured against XSS)
 -------------------------------------------- */
 async function loadMyBooks() {
   const list = document.getElementById("my-books-list");
@@ -226,12 +263,32 @@ async function loadMyBooks() {
 
     list.innerHTML = "";
     result.data.forEach(book => {
-      list.innerHTML += `
-        <li style="margin-bottom: 10px; display: flex; justify-content: space-between; align-items: center; max-width: 400px;">
-          <span><strong>${book.title}</strong> by ${book.author}</span>
-          <button class="delete-btn" onclick="deleteMyBook('${book._id}')" style="background: red; color: white; border: none; padding: 5px 10px; cursor: pointer; border-radius: 4px;">Delete</button>
-        </li>
-      `;
+      // Create list item
+      const li = document.createElement("li");
+      li.style.cssText = "margin-bottom: 10px; display: flex; justify-content: space-between; align-items: center; max-width: 400px;";
+
+      // Create text container
+      const span = document.createElement("span");
+      const strong = document.createElement("strong");
+      
+      // Inject user data safely with textContent
+      strong.textContent = book.title; 
+      span.appendChild(strong);
+      span.appendChild(document.createTextNode(` by ${book.author}`));
+
+      // Create Delete button
+      const deleteBtn = document.createElement("button");
+      deleteBtn.className = "delete-btn";
+      deleteBtn.textContent = "Delete";
+      deleteBtn.style.cssText = "background: red; color: white; border: none; padding: 5px 10px; cursor: pointer; border-radius: 4px;";
+      
+      // Attach click event securely without relying on an inline HTML string
+      deleteBtn.addEventListener("click", () => deleteMyBook(book._id));
+
+      // Append elements
+      li.appendChild(span);
+      li.appendChild(deleteBtn);
+      list.appendChild(li);
     });
   } catch (err) {
     console.error(err);
