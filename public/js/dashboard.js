@@ -11,11 +11,19 @@ if (!userId || !token) {
   window.location.href = "login.html";
 }
 
-// load initial sections
+// Load initial dashboard sections
 loadStudentInfo();
 loadBorrowedBooks();
 loadReservations();
 loadSwapRequests();
+
+/* -------------------------------------------
+   LOGOUT BUTTON
+-------------------------------------------- */
+document.getElementById("logoutBtn").addEventListener("click", () => {
+  localStorage.clear();
+  window.location.href = "login.html";
+});
 
 /* -------------------------------------------
    STUDENT INFO (XSS-safe)
@@ -100,7 +108,6 @@ async function loadSwapRequests() {
   const receivedList = document.getElementById("swap-received-list");
 
   try {
-    // ⭐ Correct route — no userId in URL
     const res = await fetch(`/swap/all`, {
       headers: { Authorization: `Bearer ${token}` }
     });
@@ -165,7 +172,7 @@ async function loadSwapRequests() {
 }
 
 /* -------------------------------------------
-   BUTTON HANDLERS
+   SWAP BUTTON HANDLERS
 -------------------------------------------- */
 function attachSwapButtons() {
   document.querySelectorAll(".accept-btn").forEach(btn => {
@@ -198,6 +205,112 @@ function attachSwapButtons() {
         headers: { Authorization: `Bearer ${token}` }
       });
       loadSwapRequests();
+    });
+  });
+}
+
+/* -------------------------------------------
+   BORROW A BOOK — SHOW LIST
+-------------------------------------------- */
+document.getElementById("loadBorrowBooksBtn").addEventListener("click", () => {
+  document.getElementById("borrow-section").classList.add("active");
+  loadBorrowableBooks();
+});
+
+async function loadBorrowableBooks() {
+  const container = document.getElementById("borrow-books-container");
+  container.innerHTML = "Loading...";
+
+  const res = await fetch(`/api/books`, {
+    headers: { Authorization: `Bearer ${token}` }
+  });
+
+  const books = await res.json();
+  const available = books.filter(b => b.available && !b.borrowedBy);
+
+  container.innerHTML = "";
+
+  available.forEach(book => {
+    const div = document.createElement("div");
+    div.className = "book-card";
+    div.innerHTML = `
+      <h3>${book.title}</h3>
+      <p>${book.author}</p>
+      <button class="borrow-btn" data-id="${book._id}">Borrow</button>
+    `;
+    container.appendChild(div);
+  });
+
+  attachBorrowButtons();
+}
+
+function attachBorrowButtons() {
+  document.querySelectorAll(".borrow-btn").forEach(btn => {
+    btn.addEventListener("click", async () => {
+      const bookId = btn.dataset.id;
+
+      const res = await fetch(`/api/books/borrow/${bookId}`, {
+        method: "POST",
+        headers: { Authorization: `Bearer ${token}` }
+      });
+
+      const result = await res.json();
+      alert(result.message);
+
+      loadBorrowedBooks();
+    });
+  });
+}
+
+/* -------------------------------------------
+   RESERVE A BOOK — SHOW LIST
+-------------------------------------------- */
+document.getElementById("loadReservationBooksBtn").addEventListener("click", () => {
+  document.getElementById("reserve-section").classList.add("active");
+  loadReservableBooks();
+});
+
+async function loadReservableBooks() {
+  const container = document.getElementById("reserve-books-container");
+  container.innerHTML = "Loading...";
+
+  const res = await fetch(`/api/books`, {
+    headers: { Authorization: `Bearer ${token}` }
+  });
+
+  const books = await res.json();
+  const reservable = books.filter(b => !b.borrowedBy && !b.reservedBy);
+
+  container.innerHTML = "";
+
+  reservable.forEach(book => {
+    const div = document.createElement("div");
+    div.className = "book-card";
+    div.innerHTML = `
+      <h3>${book.title}</h3>
+      <p>${book.author}</p>
+      <button class="reserve-btn" data-id="${book._id}">Reserve</button>
+    `;
+    container.appendChild(div);
+  });
+
+  attachReserveButtons();
+}
+
+function attachReserveButtons() {
+  document.querySelectorAll(".reserve-btn").forEach(btn => {
+    btn.addEventListener("click", async () => {
+      const bookId = btn.dataset.id;
+
+      const res = await fetch(`/api/books/reserve/${bookId}`, {
+        method: "POST",
+        headers: { Authorization: `Bearer ${token}` }
+      });
+
+      const result = await res.json();
+      alert(result.message);
+
+      loadReservations();
     });
   });
 }
