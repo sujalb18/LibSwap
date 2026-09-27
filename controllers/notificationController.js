@@ -1,4 +1,4 @@
-const Notification = require('../model/Notification');
+const Notification = require('../models/Notification');
 
 // Internal helper (not a route handler) used by other controllers to
 // raise a notification whenever something notification-worthy happens,

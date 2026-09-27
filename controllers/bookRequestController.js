@@ -1,4 +1,4 @@
-const BookRequest = require('../model/BookRequest');
+const BookRequest = require('../models/BookRequest');
 const { createNotification } = require('./notificationController');
 
 // As a user, request a book that isn't currently in the library collection
