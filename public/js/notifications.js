@@ -114,7 +114,7 @@ const typeLabels = {
 
 // Shows the notifications on the page
 const displayNotifications = (notifications) => {
-    notificationList.innerHTML = '';
+    notificationList.replaceChildren();
     message.textContent = '';
 
     if (notifications.length === 0) {
@@ -129,16 +129,29 @@ const displayNotifications = (notifications) => {
             card.classList.add('unread');
         }
 
-        card.innerHTML = `
-            <div class="notification-card-top">
-                <h3>${notification.title}</h3>
-            </div>
-            <p>${notification.message}</p>
-            <div class="notification-meta">
-                <span class="notification-type">${typeLabels[notification.type] || 'System'}</span>
-                <span class="notification-time">${formatRelativeTime(notification.createdAt)}</span>
-            </div>
-        `;
+        const cardTop = document.createElement('div');
+        cardTop.classList.add('notification-card-top');
+
+        const title = document.createElement('h3');
+        title.textContent = notification.title;
+        cardTop.appendChild(title);
+
+        const notificationMessage = document.createElement('p');
+        notificationMessage.textContent = notification.message;
+
+        const meta = document.createElement('div');
+        meta.classList.add('notification-meta');
+
+        const type = document.createElement('span');
+        type.classList.add('notification-type');
+        type.textContent = typeLabels[notification.type] || 'System';
+
+        const time = document.createElement('span');
+        time.classList.add('notification-time');
+        time.textContent = formatRelativeTime(notification.createdAt);
+
+        meta.append(type, time);
+        card.append(cardTop, notificationMessage, meta);
 
         // Only unread notifications get a "Mark read" action
         if (!notification.isRead) {
@@ -180,7 +193,7 @@ const updateUnreadBadge = async () => {
 const loadNotifications = async () => {
     try {
         message.textContent = 'Loading notifications...';
-        notificationList.innerHTML = '';
+        notificationList.replaceChildren();
 
         let url = '/api/notifications';
         if (unreadFilter.value === 'unread') {
