@@ -12,12 +12,11 @@ const authMiddleware = (req, res, next) => {
     }
 
     const token = authHeader.split(' ')[1];
-
     const decoded = jwt.verify(token, process.env.JWT_SECRET);
 
-    // ⭐ Normalize decoded token for consistent backend usage
+    // ⭐ Shared structure across entire project
     req.user = {
-      id: decoded.userId,   // FIXED: always available as req.user.id
+      userId: decoded.userId,
       role: decoded.role
     };
 

@@ -2,18 +2,14 @@ const Book = require("../models/Book");
 
 exports.reserveBook = async (req, res) => {
   try {
-    const { userId, bookId } = req.params;
+    const userId = req.user.userId;   // ⭐ Secure user ID from token
+    const { bookId } = req.params;
 
-    // ⭐ Find the book
     const book = await Book.findById(bookId);
     if (!book) {
-      return res.status(404).json({
-        success: false,
-        message: "Book not found"
-      });
+      return res.status(404).json({ success: false, message: "Book not found" });
     }
 
-    // ⭐ Prevent reserving borrowed books
     if (book.borrowedBy) {
       return res.status(400).json({
         success: false,
@@ -21,7 +17,6 @@ exports.reserveBook = async (req, res) => {
       });
     }
 
-    // ⭐ Prevent double reservations
     if (book.reservedBy && book.reservedBy.toString() !== userId) {
       return res.status(400).json({
         success: false,
@@ -29,9 +24,8 @@ exports.reserveBook = async (req, res) => {
       });
     }
 
-    // ⭐ Reserve logic
     book.reservedBy = userId;
-    book.available = false;   // REQUIRED FIX
+    book.available = false;
 
     await book.save();
 
@@ -43,9 +37,6 @@ exports.reserveBook = async (req, res) => {
 
   } catch (error) {
     console.error("Reserve error:", error);
-    return res.status(500).json({
-      success: false,
-      message: "Server error"
-    });
+    return res.status(500).json({ success: false, message: "Server error" });
   }
 };
