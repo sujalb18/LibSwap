@@ -1,15 +1,15 @@
-// read user securely from localStorage
-const userString = localStorage.getItem("user");
+// ⭐ Read user securely from shared login keys
+const userId = localStorage.getItem("userId");
+const fullName = localStorage.getItem("fullName");
+const username = localStorage.getItem("username");
+const email = localStorage.getItem("email");
+const role = localStorage.getItem("role");
 const token = localStorage.getItem("token");
 
-// redirect if not logged in, change to landing page/or start page
-if (!userString || !token) {
+// redirect if not logged in
+if (!userId || !token) {
   window.location.href = "login.html";
 }
-
-// parse the user object safely
-const currentUser = JSON.parse(userString);
-const userId = currentUser.id; 
 
 // load initial sections
 loadStudentInfo();
@@ -18,12 +18,11 @@ loadReservations();
 loadSwapRequests();
 
 /* -------------------------------------------
-   STUDENT INFO (Secured against XSS)
+   STUDENT INFO (XSS-safe)
 -------------------------------------------- */
 function loadStudentInfo() {
   const container = document.getElementById("student-details");
-  
-  // Build the HTML structure safely (NO user variables here)
+
   container.innerHTML = `
     <p><strong>Name:</strong> <span id="ui-name"></span></p>
     <p><strong>Username:</strong> <span id="ui-username"></span></p>
@@ -31,11 +30,10 @@ function loadStudentInfo() {
     <p><strong>Role:</strong> <span id="ui-role"></span></p>
   `;
 
-  // Inject the data using textContent to prevent script execution
-  document.getElementById("ui-name").textContent = currentUser.fullName;
-  document.getElementById("ui-username").textContent = currentUser.username;
-  document.getElementById("ui-email").textContent = currentUser.email;
-  document.getElementById("ui-role").textContent = currentUser.role;
+  document.getElementById("ui-name").textContent = fullName;
+  document.getElementById("ui-username").textContent = username;
+  document.getElementById("ui-email").textContent = email;
+  document.getElementById("ui-role").textContent = role;
 }
 
 /* -------------------------------------------
@@ -102,7 +100,6 @@ async function loadSwapRequests() {
   const receivedList = document.getElementById("swap-received-list");
 
   try {
-    // changed route to /swap/all (removed ${userId} parameter)
     const res = await fetch(`/swap/all`, {
       headers: { Authorization: `Bearer ${token}` }
     });
@@ -167,7 +164,7 @@ async function loadSwapRequests() {
 }
 
 /* -------------------------------------------
-   BUTTON HANDLERS (Accept / Reject / Cancel)
+   BUTTON HANDLERS
 -------------------------------------------- */
 function attachSwapButtons() {
   document.querySelectorAll(".accept-btn").forEach(btn => {

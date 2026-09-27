@@ -6,8 +6,9 @@ const Book = require("../models/Book");
 exports.sendSwapRequest = async (req, res) => {
   try {
     const { requestedBookId, offeredBookId, ownerId } = req.body;
-    // extract requester directly from token, ignoring anything sent in req.body
-    const requesterId = req.user.id; 
+
+    // ⭐ Extract requester securely from token
+    const requesterId = req.user.userId;
 
     if (!requestedBookId || !offeredBookId || !ownerId) {
       return res.status(400).json({ success: false, message: "Missing required fields" });
@@ -17,7 +18,6 @@ exports.sendSwapRequest = async (req, res) => {
       return res.status(400).json({ success: false, message: "Invalid book ID format" });
     }
 
-    // validate both books exist and check ownership
     const [requestedBook, offeredBook] = await Promise.all([
       Book.findById(requestedBookId),
       Book.findById(offeredBookId)
@@ -27,25 +27,21 @@ exports.sendSwapRequest = async (req, res) => {
       return res.status(404).json({ success: false, message: "One or both books not found" });
     }
 
-    // ensure the requested book actually belongs to the specified owner
     if (requestedBook.ownerId.toString() !== ownerId) {
       return res.status(400).json({ success: false, message: "Requested book does not belong to the specified owner" });
     }
 
-    // ensure the requester actually owns the book they are offering
     if (offeredBook.ownerId.toString() !== requesterId) {
       return res.status(403).json({ success: false, message: "You can only offer books that you own" });
     }
 
-    // cannot swap books that are currently checked out or reserved
     if (requestedBook.borrowedBy || requestedBook.reservedBy || offeredBook.borrowedBy || offeredBook.reservedBy) {
       return res.status(400).json({ success: false, message: "Cannot swap books that are currently borrowed or reserved" });
     }
 
-    // prevent offering a book that is already tied up in another pending swap
     const existingPendingOffer = await SwapRequest.findOne({
-      requesterId: requesterId,
-      offeredBookId: offeredBookId,
+      requesterId,
+      offeredBookId,
       status: "pending"
     });
 
@@ -61,7 +57,6 @@ exports.sendSwapRequest = async (req, res) => {
       status: "pending"
     });
 
-    // notify connected clients for real-time updates
     const io = req.app.get("io");
     if (io) io.emit("swapUpdated");
 
@@ -76,27 +71,29 @@ exports.sendSwapRequest = async (req, res) => {
 exports.acceptSwapRequest = async (req, res) => {
   try {
     const swapId = req.params.id;
-    const currentUserId = req.user.id;
+    const currentUserId = req.user.userId;
 
     if (!mongoose.Types.ObjectId.isValid(swapId)) {
       return res.status(400).json({ success: false, message: "Invalid swap ID" });
     }
 
-    const swap = await SwapRequest.findById(swapId).populate("requestedBookId").populate("offeredBookId");
+    const swap = await SwapRequest.findById(swapId)
+      .populate("requestedBookId")
+      .populate("offeredBookId");
 
     if (!swap) return res.status(404).json({ success: false, message: "Swap request not found" });
 
-    // strict ownership check from token
     if (swap.ownerId.toString() !== currentUserId) {
       return res.status(403).json({ success: false, message: "Unauthorized to accept this swap" });
     }
 
-    if (swap.status !== "pending") return res.status(400).json({ success: false, message: "Swap already processed" });
+    if (swap.status !== "pending") {
+      return res.status(400).json({ success: false, message: "Swap already processed" });
+    }
 
     const requestedBook = swap.requestedBookId;
     const offeredBook = swap.offeredBookId;
 
-    // swap ownership
     const tempOwner = requestedBook.ownerId;
     requestedBook.ownerId = offeredBook.ownerId;
     offeredBook.ownerId = tempOwner;
@@ -104,11 +101,9 @@ exports.acceptSwapRequest = async (req, res) => {
     await requestedBook.save();
     await offeredBook.save();
 
-    // mark accepted
     swap.status = "accepted";
     await swap.save();
 
-    // auto-reject any other pending swaps involving either of these books
     await SwapRequest.updateMany(
       {
         _id: { $ne: swapId },
@@ -137,17 +132,18 @@ exports.acceptSwapRequest = async (req, res) => {
 exports.rejectSwapRequest = async (req, res) => {
   try {
     const swapId = req.params.id;
-    const currentUserId = req.user.id;
+    const currentUserId = req.user.userId;
 
     const swap = await SwapRequest.findById(swapId);
     if (!swap) return res.status(404).json({ success: false, message: "Swap request not found" });
 
-    // strict ownership check from token
     if (swap.ownerId.toString() !== currentUserId) {
       return res.status(403).json({ success: false, message: "Unauthorized to reject this swap" });
     }
 
-    if (swap.status !== "pending") return res.status(400).json({ success: false, message: "Swap already processed" });
+    if (swap.status !== "pending") {
+      return res.status(400).json({ success: false, message: "Swap already processed" });
+    }
 
     swap.status = "rejected";
     await swap.save();
@@ -165,17 +161,18 @@ exports.rejectSwapRequest = async (req, res) => {
 exports.cancelSwapRequest = async (req, res) => {
   try {
     const swapId = req.params.id;
-    const currentUserId = req.user.id;
+    const currentUserId = req.user.userId;
 
     const swap = await SwapRequest.findById(swapId);
     if (!swap) return res.status(404).json({ success: false, message: "Swap request not found" });
 
-    // strict ownership check from token (Must be the original requester)
     if (swap.requesterId.toString() !== currentUserId) {
       return res.status(403).json({ success: false, message: "Unauthorized to cancel this swap" });
     }
 
-    if (swap.status !== "pending") return res.status(400).json({ success: false, message: "Cannot cancel processed swap" });
+    if (swap.status !== "pending") {
+      return res.status(400).json({ success: false, message: "Cannot cancel processed swap" });
+    }
 
     swap.status = "cancelled";
     await swap.save();
@@ -192,8 +189,8 @@ exports.cancelSwapRequest = async (req, res) => {
 // GET ALL SWAP REQUESTS
 exports.getAllSwapRequests = async (req, res) => {
   try {
-    // get user ID securely from token, ignoring URL params
-    const userId = req.user.id;
+    // ⭐ Secure user ID from token
+    const userId = req.user.userId;
 
     const sent = await SwapRequest.find({ requesterId: userId })
       .populate("requestedBookId", "title author")

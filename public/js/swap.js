@@ -1,15 +1,11 @@
-// ⭐ Read user securely from localStorage (matching dashboard.js)
-const userString = localStorage.getItem("user");
+// ⭐ Read user securely from shared login keys
+const userId = localStorage.getItem("userId");
 const token = localStorage.getItem("token");
 
-// redirect if not logged in, change to landing page or login or other proper
-if (!userString || !token) {
+// redirect if not logged in
+if (!userId || !token) {
   window.location.href = "login.html";
 }
-
-// parse the user object safely
-const currentUser = JSON.parse(userString);
-const userId = currentUser.id; 
 
 document.getElementById("backBtn").addEventListener("click", () => {
   window.location.href = "dashboard.html";
@@ -39,7 +35,8 @@ async function loadAvailableBooks() {
 
     const books = await res.json();
 
-    const filtered = books.filter(b => b.ownerId.toString() !== userId);
+    // ⭐ Handle null ownerId safely
+    const filtered = books.filter(b => b.ownerId && b.ownerId.toString() !== userId);
 
     container.innerHTML = "";
 
@@ -126,11 +123,6 @@ function enableSendButton() {
 /* -------------------------------------------
    SEND SWAP REQUEST
 -------------------------------------------- */
-// Inside the sendRequestBtn event listener in swap.js
-
-/* -------------------------------------------
-   SEND SWAP REQUEST
--------------------------------------------- */
 document.getElementById("sendRequestBtn").addEventListener("click", async () => {
   const statusMsg = document.getElementById("statusMsg");
 
@@ -142,7 +134,6 @@ document.getElementById("sendRequestBtn").addEventListener("click", async () => 
         Authorization: `Bearer ${token}`
       },
       body: JSON.stringify({
-        // requesterId removed - backend now uses token safely
         requestedBookId: selectedBookId,
         offeredBookId: selectedMyBookId,
         ownerId: selectedBookOwnerId
@@ -160,12 +151,11 @@ document.getElementById("sendRequestBtn").addEventListener("click", async () => 
     statusMsg.textContent = "Swap request sent successfully!";
     statusMsg.style.color = "green";
 
-    // Optional: Reset selections after success
     selectedBookId = null;
     selectedMyBookId = null;
     selectedBookOwnerId = null;
     enableSendButton();
-    
+
   } catch (err) {
     statusMsg.textContent = "Error sending request.";
     statusMsg.style.color = "red";
