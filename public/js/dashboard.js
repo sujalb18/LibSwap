@@ -1,25 +1,39 @@
-// ⭐ Read user from localStorage (set during login)
-const demoUser = JSON.parse(localStorage.getItem("movieflixUser"));
-const token = localStorage.getItem("movieflixToken");
-const userId = demoUser.id;
+// ⭐ Read user securely from shared login keys
+const userId = localStorage.getItem("userId");
+const fullName = localStorage.getItem("fullName");
+const username = localStorage.getItem("username");
+const email = localStorage.getItem("email");
+const role = localStorage.getItem("role");
+const token = localStorage.getItem("token");
 
-// ⭐ Load initial sections
+// redirect if not logged in
+if (!userId || !token) {
+  window.location.href = "login.html";
+}
+
+// load initial sections
 loadStudentInfo();
 loadBorrowedBooks();
 loadReservations();
 loadSwapRequests();
 
 /* -------------------------------------------
-   STUDENT INFO
+   STUDENT INFO (XSS-safe)
 -------------------------------------------- */
 function loadStudentInfo() {
   const container = document.getElementById("student-details");
+
   container.innerHTML = `
-    <p><strong>Name:</strong> ${demoUser.fullName}</p>
-    <p><strong>Username:</strong> ${demoUser.username}</p>
-    <p><strong>Email:</strong> ${demoUser.email}</p>
-    <p><strong>Role:</strong> Student</p>
+    <p><strong>Name:</strong> <span id="ui-name"></span></p>
+    <p><strong>Username:</strong> <span id="ui-username"></span></p>
+    <p><strong>Email:</strong> <span id="ui-email"></span></p>
+    <p><strong>Role:</strong> <span id="ui-role"></span></p>
   `;
+
+  document.getElementById("ui-name").textContent = fullName;
+  document.getElementById("ui-username").textContent = username;
+  document.getElementById("ui-email").textContent = email;
+  document.getElementById("ui-role").textContent = role;
 }
 
 /* -------------------------------------------
@@ -46,7 +60,6 @@ async function loadBorrowedBooks() {
     });
 
   } catch (err) {
-    console.error(err);
     list.innerHTML = "<li>Error loading borrowed books.</li>";
   }
 }
@@ -75,7 +88,6 @@ async function loadReservations() {
     });
 
   } catch (err) {
-    console.error(err);
     list.innerHTML = "<li>Error loading reservations.</li>";
   }
 }
@@ -88,7 +100,8 @@ async function loadSwapRequests() {
   const receivedList = document.getElementById("swap-received-list");
 
   try {
-    const res = await fetch(`/dashboard/swap-all/${userId}`, {
+    // ⭐ Correct route — no userId in URL
+    const res = await fetch(`/swap/all`, {
       headers: { Authorization: `Bearer ${token}` }
     });
 
@@ -146,14 +159,13 @@ async function loadSwapRequests() {
     attachSwapButtons();
 
   } catch (err) {
-    console.error(err);
     sentList.innerHTML = "<li>Error loading swap requests.</li>";
     receivedList.innerHTML = "<li>Error loading swap requests.</li>";
   }
 }
 
 /* -------------------------------------------
-   BUTTON HANDLERS (Accept / Reject / Cancel)
+   BUTTON HANDLERS
 -------------------------------------------- */
 function attachSwapButtons() {
   document.querySelectorAll(".accept-btn").forEach(btn => {
