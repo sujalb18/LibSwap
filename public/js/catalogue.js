@@ -7,6 +7,41 @@ const message = document.getElementById('message');
 const genreFilter = document.getElementById('genreFilter');
 const availabilityFilter = document.getElementById('availabilityFilter');
 const sortSelect = document.getElementById('sortSelect');
+const reviewModal = document.getElementById('reviewModal');
+
+const closeReviewModal =
+    document.getElementById('closeReviewModal');
+
+const reviewForm =
+    document.getElementById('reviewForm');
+
+const reviewBookTitle =
+    document.getElementById('reviewBookTitle');
+
+const reviewBookAuthor =
+    document.getElementById('reviewBookAuthor');
+
+const ratingStars =
+    document.querySelectorAll('.star-button');
+
+const ratingText =
+    document.getElementById('ratingText');
+
+const reviewComment =
+    document.getElementById('reviewComment');
+
+const commentCount =
+    document.getElementById('commentCount');
+
+const submitReviewButton =
+    document.getElementById('submitReviewButton');
+
+const reviewMessage =
+    document.getElementById('reviewMessage');
+
+// Stores the currently selected book for review
+let selectedBookId = null;
+let selectedRating = 0;
 
 // Connect this catalogue page to Socket.IO
 const socket = io();
@@ -75,6 +110,49 @@ const displayBooks = (books) => {
             <p><strong>Genre:</strong> ${book.genre || 'Not specified'}</p>
             <p><strong>Availability:</strong> ${book.available ? 'Available' : 'Unavailable'}</p>
         `;
+
+        card.innerHTML = `
+    <h2>${book.title}</h2>
+
+    <p>
+        <strong>Author:</strong>
+        ${book.author}
+    </p>
+
+    <p>
+        <strong>Genre:</strong>
+        ${book.genre || 'Not specified'}
+    </p>
+
+    <p>
+        <strong>Availability:</strong>
+        <span class="${book.available ? 'available' : 'unavailable'}">
+            ${book.available ? 'Available' : 'Unavailable'}
+        </span>
+    </p>
+
+    <div class="book-review-actions">
+
+        <button
+            type="button"
+            class="view-reviews-button"
+            data-book-id="${book._id}"
+        >
+            View Reviews
+        </button>
+
+        <button
+            type="button"
+            class="write-review-button"
+            data-book-id="${book._id}"
+            data-book-title="${encodeURIComponent(book.title)}"
+            data-book-author="${encodeURIComponent(book.author)}"
+        >
+            Write Review
+        </button>
+
+    </div>
+`;
 
         // Add the card to the page
         bookList.appendChild(card);
@@ -216,6 +294,225 @@ socket.on('booksChanged', () => {
     // Reload the catalogue automatically without refreshing the browser
     loadBooks(searchTerm);
 });
+
+// Open the review form for a selected book
+document.addEventListener('click', (event) => {
+
+    const writeButton =
+        event.target.closest('.write-review-button');
+
+    if (!writeButton) {
+        return;
+    }
+
+    const token = localStorage.getItem('token');
+
+    // User must be logged in to submit a review
+    if (!token) {
+        window.location.href = '/login.html';
+        return;
+    }
+
+    selectedBookId = writeButton.dataset.bookId;
+
+    const title = decodeURIComponent(
+        writeButton.dataset.bookTitle
+    );
+
+    const author = decodeURIComponent(
+        writeButton.dataset.bookAuthor
+    );
+
+    reviewBookTitle.textContent = title;
+    reviewBookAuthor.textContent = `by ${author}`;
+
+    // Reset form
+    reviewForm.reset();
+    selectedRating = 0;
+
+    updateRatingStars();
+
+    ratingText.textContent =
+        'Select a rating';
+
+    commentCount.textContent = '0';
+
+    reviewMessage.textContent = '';
+
+    reviewModal.classList.remove('hidden');
+
+    reviewComment.focus();
+});
+
+const updateRatingStars = () => {
+
+    ratingStars.forEach((star) => {
+
+        const rating =
+            Number(star.dataset.rating);
+
+        star.classList.toggle(
+            'selected',
+            rating <= selectedRating
+        );
+    });
+
+    if (selectedRating > 0) {
+        ratingText.textContent =
+            `${selectedRating} out of 5`;
+    }
+};
+
+
+ratingStars.forEach((star) => {
+
+    star.addEventListener('click', () => {
+
+        selectedRating =
+            Number(star.dataset.rating);
+
+        updateRatingStars();
+    });
+
+});
+
+reviewComment.addEventListener('input', () => {
+
+    commentCount.textContent =
+        reviewComment.value.length;
+});
+
+const closeReviewModalHandler = () => {
+
+    reviewModal.classList.add('hidden');
+
+    selectedBookId = null;
+    selectedRating = 0;
+
+    reviewForm.reset();
+
+    updateRatingStars();
+
+    ratingText.textContent =
+        'Select a rating';
+
+    commentCount.textContent = '0';
+
+    reviewMessage.textContent = '';
+};
+
+
+closeReviewModal.addEventListener(
+    'click',
+    closeReviewModalHandler
+);
+
+
+reviewModal.addEventListener('click', (event) => {
+
+    if (event.target === reviewModal) {
+        closeReviewModalHandler();
+    }
+
+});
+
+reviewForm.addEventListener(
+    'submit',
+    async (event) => {
+
+        event.preventDefault();
+
+        const token =
+            localStorage.getItem('token');
+
+        if (!token) {
+            window.location.href = '/login.html';
+            return;
+        }
+
+        if (!selectedRating) {
+
+            reviewMessage.textContent =
+                'Please select a rating.';
+
+            return;
+        }
+
+        const comment =
+            reviewComment.value.trim();
+
+        if (!comment) {
+
+            reviewMessage.textContent =
+                'Please enter a review.';
+
+            return;
+        }
+
+        submitReviewButton.disabled = true;
+
+        submitReviewButton.textContent =
+            'Submitting...';
+
+        reviewMessage.textContent = '';
+
+        try {
+
+            const response = await fetch(
+                `/api/books/${selectedBookId}/reviews`,
+                {
+                    method: 'POST',
+
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${token}`
+                    },
+
+                    body: JSON.stringify({
+                        rating: selectedRating,
+                        comment
+                    })
+                }
+            );
+
+            const data =
+                await response.json();
+
+            if (!response.ok) {
+
+                reviewMessage.textContent =
+                    data.message ||
+                    'Unable to submit review.';
+
+                return;
+            }
+
+            reviewMessage.textContent =
+                'Review submitted successfully and is awaiting moderation.';
+
+            setTimeout(() => {
+                closeReviewModalHandler();
+            }, 1500);
+
+        } catch (error) {
+
+            console.error(
+                'Review submission error:',
+                error
+            );
+
+            reviewMessage.textContent =
+                'Unable to connect to the server.';
+
+        } finally {
+
+            submitReviewButton.disabled = false;
+
+            submitReviewButton.textContent =
+                'Submit Review';
+        }
+    }
+);
 
 // Load all books when the page first opens
 loadBooks();

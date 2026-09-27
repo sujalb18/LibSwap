@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
 
@@ -27,11 +28,7 @@
             <label for="searchInput">Search books</label>
 
             <div class="search-box">
-                <input
-                    type="text"
-                    id="searchInput"
-                    placeholder="Search by title, author or genre"
-                >
+                <input type="text" id="searchInput" placeholder="Search by title, author or genre">
 
                 <button id="searchButton">
                     Search
@@ -80,6 +77,87 @@
         <section id="bookList" class="book-list">
         </section>
 
+        <!-- Review Modal -->
+        <div id="reviewModal" class="review-modal hidden">
+
+            <div class="review-modal-content">
+
+                <button type="button" id="closeReviewModal" class="review-close" aria-label="Close review form">
+                    ×
+                </button>
+
+                <div class="review-modal-header">
+                    <span class="review-label">LIBSWAP REVIEW</span>
+
+                    <h2 id="reviewBookTitle">
+                        Write a Review
+                    </h2>
+
+                    <p id="reviewBookAuthor"></p>
+                </div>
+
+                <form id="reviewForm">
+
+                    <div class="review-rating-section">
+
+                        <label>Your Rating</label>
+
+                        <div id="ratingStars" class="rating-stars" role="group"
+                            aria-label="Select a rating from 1 to 5">
+                            <button type="button" class="star-button" data-rating="1">
+                                ★
+                            </button>
+
+                            <button type="button" class="star-button" data-rating="2">
+                                ★
+                            </button>
+
+                            <button type="button" class="star-button" data-rating="3">
+                                ★
+                            </button>
+
+                            <button type="button" class="star-button" data-rating="4">
+                                ★
+                            </button>
+
+                            <button type="button" class="star-button" data-rating="5">
+                                ★
+                            </button>
+                        </div>
+
+                        <p id="ratingText" class="rating-text">
+                            Select a rating
+                        </p>
+
+                    </div>
+
+                    <div class="review-comment-section">
+
+                        <label for="reviewComment">
+                            Your Review
+                        </label>
+
+                        <textarea id="reviewComment" rows="5" maxlength="1000"
+                            placeholder="Share your experience with this book..." required></textarea>
+
+                        <div class="character-count">
+                            <span id="commentCount">0</span>/1000
+                        </div>
+
+                    </div>
+
+                    <p id="reviewMessage" class="review-message" aria-live="polite"></p>
+
+                    <button type="submit" id="submitReviewButton" class="submit-review-button">
+                        Submit Review
+                    </button>
+
+                </form>
+
+            </div>
+
+        </div>
+
     </main>
 
     <!-- Socket.IO lets the catalogue receive real-time book updates -->
@@ -89,4 +167,5 @@
     <script src="js/catalogue.js"></script>
 
 </body>
+
 </html>
