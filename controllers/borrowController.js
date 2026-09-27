@@ -2,11 +2,19 @@ const Book = require("../models/Book");
 
 exports.borrowBook = async (req, res) => {
   try {
-    const { userId, bookId } = req.params;
+    const userId = req.user.userId;   // ⭐ Secure user ID from token
+    const { bookId } = req.params;
 
     const book = await Book.findById(bookId);
     if (!book) {
       return res.status(404).json({ success: false, message: "Book not found" });
+    }
+
+    if (!book.available) {
+      return res.status(400).json({
+        success: false,
+        message: "Book is already borrowed or unavailable"
+      });
     }
 
     book.borrowedBy = userId;

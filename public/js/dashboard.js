@@ -1,18 +1,17 @@
-// read user securely from localStorage
-const userString = localStorage.getItem("user");
+// ⭐ Read user securely from shared login keys
+const userId = localStorage.getItem("userId");
+const fullName = localStorage.getItem("fullName");
+const username = localStorage.getItem("username");
+const email = localStorage.getItem("email");
+const role = localStorage.getItem("role");
 const token = localStorage.getItem("token");
 
-// redirect if not logged in, change to landing page/or start page
-if (!userString || !token) {
+// redirect if not logged in
+if (!userId || !token) {
   window.location.href = "login.html";
 }
 
-// parse the user object safely
-const currentUser = JSON.parse(userString);
-const userId = currentUser.id; 
-
-// ⭐ Load initial sections
-loadMyBooks();
+// load initial sections
 loadStudentInfo();
 loadBorrowedBooks();
 loadReservations();
@@ -64,7 +63,6 @@ async function loadBorrowedBooks() {
     });
 
   } catch (err) {
-    console.error(err);
     list.innerHTML = "<li>Error loading borrowed books.</li>";
   }
 }
@@ -93,7 +91,6 @@ async function loadReservations() {
     });
 
   } catch (err) {
-    console.error(err);
     list.innerHTML = "<li>Error loading reservations.</li>";
   }
 }
@@ -106,7 +103,8 @@ async function loadSwapRequests() {
   const receivedList = document.getElementById("swap-received-list");
 
   try {
-    const res = await fetch(`/dashboard/swap-all/${userId}`, {
+    // ⭐ Correct route — no userId in URL
+    const res = await fetch(`/swap/all`, {
       headers: { Authorization: `Bearer ${token}` }
     });
 
@@ -164,14 +162,13 @@ async function loadSwapRequests() {
     attachSwapButtons();
 
   } catch (err) {
-    console.error(err);
     sentList.innerHTML = "<li>Error loading swap requests.</li>";
     receivedList.innerHTML = "<li>Error loading swap requests.</li>";
   }
 }
 
 /* -------------------------------------------
-   BUTTON HANDLERS (Accept / Reject / Cancel)
+   BUTTON HANDLERS
 -------------------------------------------- */
 function attachSwapButtons() {
   document.querySelectorAll(".accept-btn").forEach(btn => {
