@@ -12,6 +12,7 @@ if (!userId || !token) {
 }
 
 // load initial sections
+loadMyBooks();
 loadStudentInfo();
 loadBorrowedBooks();
 loadReservations();
@@ -32,10 +33,10 @@ function loadStudentInfo() {
   `;
 
   // Inject the data using textContent to prevent script execution
-  document.getElementById("ui-name").textContent = currentUser.fullName;
-  document.getElementById("ui-username").textContent = currentUser.username;
-  document.getElementById("ui-email").textContent = currentUser.email;
-  document.getElementById("ui-role").textContent = currentUser.role;
+  document.getElementById("ui-name").textContent = fullName;
+  document.getElementById("ui-username").textContent = username;
+  document.getElementById("ui-email").textContent = email;
+  document.getElementById("ui-role").textContent = role;
 }
 
 
