@@ -17,6 +17,7 @@ const staffOnly = require('../middleware/staffOnly');
 // Anyone can browse or search the library catalogue
 router.get('/', getBooks);
 router.get('/circulation', authMiddleware, getCirculation);
+router.post('/return/:bookId', authMiddleware, returnBook);
 
 // Only authenticated staff can add library books
 router.post(
