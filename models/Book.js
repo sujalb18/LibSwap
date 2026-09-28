@@ -27,7 +27,28 @@ const bookSchema = new mongoose.Schema(
         available: {
             type: Boolean,
             default: true
+        },
+
+        // fields for Student Dashboard + Swap Requests
+
+                ownerId: {
+            type: mongoose.Schema.Types.ObjectId,
+            ref: 'User',
+            required: false
+        },
+
+        borrowedBy: {
+            type: mongoose.Schema.Types.ObjectId,
+            ref: 'User',
+            default: null
+        },
+
+        reservedBy: {
+            type: mongoose.Schema.Types.ObjectId,
+            ref: 'User',
+            default: null
         }
+
     },
     {
         // MongoDB will automatically save createdAt and updatedAt

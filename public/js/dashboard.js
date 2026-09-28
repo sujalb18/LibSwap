@@ -1,161 +1,381 @@
-// Get user info from localStorage (set during login)
+// ⭐ Read user securely from shared login keys
 const userId = localStorage.getItem("userId");
-const token = localStorage.getItem("token");
 const fullName = localStorage.getItem("fullName");
+const username = localStorage.getItem("username");
+const email = localStorage.getItem("email");
+const role = localStorage.getItem("role");
+const token = localStorage.getItem("token");
 
-// If not logged in, redirect to login
-// if (!userId || !token) {
-//   window.location.href = "login.html";
-// }
-
-// Show welcome text
-const welcomeText = document.getElementById("welcomeText");
-if (welcomeText && fullName) {
-  welcomeText.textContent = `Welcome, ${fullName}`;
-}
-
-// Logout
-document.getElementById("logoutBtn").addEventListener("click", () => {
-  localStorage.clear();
+// redirect if not logged in
+if (!userId || !token) {
   window.location.href = "login.html";
-});
+}
 
-// Load all dashboard data on page load
+// load initial sections
 loadMyBooks();
-loadSwapReceived();
-loadSwapSent();
+loadStudentInfo();
+loadBorrowedBooks();
+loadReservations();
+loadSwapRequests();
 
-// ---------- My Books ----------
+/* -------------------------------------------
+   STUDENT INFO (Secured against XSS)
+-------------------------------------------- */
+function loadStudentInfo() {
+  const container = document.getElementById("student-details");
+  
+  // Build the HTML structure safely (NO user variables here)
+  container.innerHTML = `
+    <p><strong>Name:</strong> <span id="ui-name"></span></p>
+    <p><strong>Username:</strong> <span id="ui-username"></span></p>
+    <p><strong>Email:</strong> <span id="ui-email"></span></p>
+    <p><strong>Role:</strong> <span id="ui-role"></span></p>
+  `;
+
+  // Inject the data using textContent to prevent script execution
+  document.getElementById("ui-name").textContent = fullName;
+  document.getElementById("ui-username").textContent = username;
+  document.getElementById("ui-email").textContent = email;
+  document.getElementById("ui-role").textContent = role;
+}
+
+
+/* -------------------------------------------
+   BORROWED BOOKS (Secured against XSS)
+-------------------------------------------- */
+async function loadBorrowedBooks() {
+  const list = document.getElementById("borrowed-list");
+
+  try {
+    const res = await fetch(`/dashboard/borrowed/${userId}`, {
+      headers: { Authorization: `Bearer ${token}` }
+    });
+
+    const result = await res.json();
+
+    if (!result.success || result.data.length === 0) {
+      list.innerHTML = "<li>No books borrowed yet.</li>";
+      return;
+    }
+
+    list.innerHTML = "";
+    result.data.forEach(book => {
+      const li = document.createElement("li");
+      li.textContent = `${book.title} by ${book.author}`; // Safe injection
+      list.appendChild(li);
+    });
+
+  } catch (err) {
+    list.innerHTML = "<li>Error loading borrowed books.</li>";
+  }
+}
+
+/* -------------------------------------------
+   RESERVATIONS (Secured against XSS)
+-------------------------------------------- */
+async function loadReservations() {
+  const list = document.getElementById("reservation-list");
+
+  try {
+    const res = await fetch(`/dashboard/reservations/${userId}`, {
+      headers: { Authorization: `Bearer ${token}` }
+    });
+
+    const result = await res.json();
+
+    if (!result.success || result.data.length === 0) {
+      list.innerHTML = "<li>No reservations yet.</li>";
+      return;
+    }
+
+    list.innerHTML = "";
+    result.data.forEach(book => {
+      const li = document.createElement("li");
+      li.textContent = `${book.title} by ${book.author}`; // Safe injection
+      list.appendChild(li);
+    });
+
+  } catch (err) {
+    list.innerHTML = "<li>Error loading reservations.</li>";
+  }
+}
+
+/* -------------------------------------------
+   SWAP REQUESTS (Secured against XSS)
+-------------------------------------------- */
+async function loadSwapRequests() {
+  const sentList = document.getElementById("swap-sent-list");
+  const receivedList = document.getElementById("swap-received-list");
+
+  try {
+    const res = await fetch(`/swap/all`, {
+      headers: { Authorization: `Bearer ${token}` }
+    });
+
+    const result = await res.json();
+
+    if (!result.success) {
+      sentList.innerHTML = "<li>Error loading swap requests.</li>";
+      receivedList.innerHTML = "<li>Error loading swap requests.</li>";
+      return;
+    }
+
+    const { sent, received } = result.data;
+
+    /* ----- SENT REQUESTS ----- */
+    if (sent.length === 0) {
+      sentList.innerHTML = "<li>No sent swap requests.</li>";
+    } else {
+      sentList.innerHTML = "";
+      sent.forEach(req => {
+        const li = document.createElement("li");
+        li.className = "swap-card";
+
+        // Safely build the contents
+        const p1 = document.createElement("p");
+        p1.innerHTML = "<strong>You requested:</strong> ";
+        p1.appendChild(document.createTextNode(req.requestedBookId.title));
+
+        const p2 = document.createElement("p");
+        p2.innerHTML = "<strong>You offered:</strong> ";
+        p2.appendChild(document.createTextNode(req.offeredBookId.title));
+
+        const p3 = document.createElement("p");
+        p3.innerHTML = `<strong>Status:</strong> ${req.status}`;
+
+        li.append(p1, p2, p3);
+
+        if (req.status === "pending") {
+          const btn = document.createElement("button");
+          btn.className = "cancel-btn";
+          btn.dataset.id = req._id;
+          btn.textContent = "Cancel";
+          li.appendChild(btn);
+        }
+
+        sentList.appendChild(li);
+      });
+    }
+
+    /* ----- RECEIVED REQUESTS ----- */
+    if (received.length === 0) {
+      receivedList.innerHTML = "<li>No received swap requests.</li>";
+    } else {
+      receivedList.innerHTML = "";
+      received.forEach(req => {
+        const li = document.createElement("li");
+        li.className = "swap-card";
+
+        const p1 = document.createElement("p");
+        p1.innerHTML = "<strong>Requested from you:</strong> ";
+        p1.appendChild(document.createTextNode(req.requestedBookId.title));
+
+        const p2 = document.createElement("p");
+        p2.innerHTML = "<strong>They offered:</strong> ";
+        p2.appendChild(document.createTextNode(req.offeredBookId.title));
+
+        const p3 = document.createElement("p");
+        p3.innerHTML = `<strong>Status:</strong> ${req.status}`;
+
+        li.append(p1, p2, p3);
+
+        if (req.status === "pending") {
+          const acceptBtn = document.createElement("button");
+          acceptBtn.className = "accept-btn";
+          acceptBtn.dataset.id = req._id;
+          acceptBtn.textContent = "Accept";
+          
+          const rejectBtn = document.createElement("button");
+          rejectBtn.className = "reject-btn";
+          rejectBtn.dataset.id = req._id;
+          rejectBtn.textContent = "Reject";
+
+          li.append(acceptBtn, rejectBtn);
+        }
+
+        receivedList.appendChild(li);
+      });
+    }
+
+    attachSwapButtons();
+
+  } catch (err) {
+    sentList.innerHTML = "<li>Error loading swap requests.</li>";
+    receivedList.innerHTML = "<li>Error loading swap requests.</li>";
+  }
+}
+
+/* -------------------------------------------
+   BUTTON HANDLERS
+-------------------------------------------- */
+function attachSwapButtons() {
+  document.querySelectorAll(".accept-btn").forEach(btn => {
+    btn.addEventListener("click", async () => {
+      const id = btn.dataset.id;
+      await fetch(`/swap/accept/${id}`, {
+        method: "POST",
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      loadSwapRequests();
+    });
+  });
+
+  document.querySelectorAll(".reject-btn").forEach(btn => {
+    btn.addEventListener("click", async () => {
+      const id = btn.dataset.id;
+      await fetch(`/swap/reject/${id}`, {
+        method: "POST",
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      loadSwapRequests();
+    });
+  });
+
+  document.querySelectorAll(".cancel-btn").forEach(btn => {
+    btn.addEventListener("click", async () => {
+      const id = btn.dataset.id;
+      await fetch(`/swap/cancel/${id}`, {
+        method: "POST",
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      loadSwapRequests();
+    });
+  });
+}
+
+/* -------------------------------------------
+   MY BOOKS (Owned) - FETCH, ADD, & DELETE (Secured against XSS)
+-------------------------------------------- */
 async function loadMyBooks() {
-  const container = document.getElementById("myBooks");
-  container.innerHTML = "Loading...";
+  const list = document.getElementById("my-books-list");
+  if (!list) return; 
 
   try {
-    const res = await fetch(
-      `http://localhost:5000/dashboard/my-books/${userId}`,
-      {
-        headers: {
-          Authorization: `Bearer ${token}`
-        }
-      }
-    );
+    const res = await fetch(`/dashboard/my-books/${userId}`, {
+      headers: { Authorization: `Bearer ${token}` }
+    });
+    const result = await res.json();
 
-    const data = await res.json();
-
-    if (!res.ok) {
-      container.textContent = data.message || "Failed to load books";
+    if (!result.success || result.data.length === 0) {
+      list.innerHTML = "<li>You haven't added any personal books yet.</li>";
       return;
     }
 
-    if (!data.books || data.books.length === 0) {
-      container.textContent = "No books found.";
-      return;
-    }
+    list.innerHTML = "";
+    result.data.forEach(book => {
+      // Create list item
+      const li = document.createElement("li");
+      li.style.cssText = "margin-bottom: 10px; display: flex; justify-content: space-between; align-items: center; max-width: 400px;";
 
-    container.innerHTML = "";
+      // Create text container
+      const span = document.createElement("span");
+      const strong = document.createElement("strong");
+      
+      // Inject user data safely with textContent
+      strong.textContent = book.title; 
+      span.appendChild(strong);
+      span.appendChild(document.createTextNode(` by ${book.author}`));
 
-    data.books.forEach(book => {
-      const div = document.createElement("div");
-      div.className = "book-card";
-      div.innerHTML = `
-        <h3>${book.title}</h3>
-        <p>Author: ${book.author}</p>
-        <p>Genre: ${book.genre || "N/A"}</p>
-      `;
-      container.appendChild(div);
+      // Create Delete button
+      const deleteBtn = document.createElement("button");
+      deleteBtn.className = "delete-btn";
+      deleteBtn.textContent = "Delete";
+      deleteBtn.style.cssText = "background: red; color: white; border: none; padding: 5px 10px; cursor: pointer; border-radius: 4px;";
+      
+      // Attach click event securely without relying on an inline HTML string
+      deleteBtn.addEventListener("click", () => deleteMyBook(book._id));
+
+      // Append elements
+      li.appendChild(span);
+      li.appendChild(deleteBtn);
+      list.appendChild(li);
     });
   } catch (err) {
-    console.error("Error loading books:", err);
-    container.textContent = "Error loading books.";
+    console.error(err);
+    list.innerHTML = "<li>Error loading your books.</li>";
   }
 }
 
-// ---------- Swap Requests Received ----------
-async function loadSwapReceived() {
-  const container = document.getElementById("swapReceived");
-  container.innerHTML = "Loading...";
+// Handle Add Book Form Submission with Client-Side Validation
+const addBookForm = document.getElementById("dashboardAddBookForm");
+if (addBookForm) {
+  addBookForm.addEventListener("submit", async (e) => {
+    e.preventDefault();
+    
+    const msg = document.getElementById("addBookMessage");
+    
+    // 1. Get values and immediately trim whitespace from the edges
+    const title = document.getElementById("newBookTitle").value.trim();
+    const author = document.getElementById("newBookAuthor").value.trim();
+    const genre = document.getElementById("newBookGenre").value.trim();
+    
+    // 2. Check if they are empty AFTER trimming (prevents spacebar bypassing)
+    if (!title || !author) {
+      msg.style.color = "red";
+      msg.textContent = "Title and Author cannot be empty or just spaces.";
+      return; 
+    }
 
-  try {
-    const res = await fetch(
-      `http://localhost:5000/dashboard/swap-received/${userId}`,
-      {
-        headers: {
-          Authorization: `Bearer ${token}`
-        }
+    // 3. Disable button to prevent double-clicks/spam submissions
+    const submitBtn = addBookForm.querySelector('button[type="submit"]');
+    submitBtn.disabled = true;
+    submitBtn.textContent = "Adding...";
+    msg.textContent = ""; 
+
+    try {
+      const res = await fetch(`/dashboard/my-books/${userId}`, {
+        method: "POST",
+        headers: { 
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}` 
+        },
+        // Send the safely trimmed values
+        body: JSON.stringify({ title, author, genre })
+      });
+
+      const result = await res.json();
+
+      if (result.success) {
+        msg.style.color = "green";
+        msg.textContent = "Book added successfully!";
+        addBookForm.reset();
+        loadMyBooks(); // Instantly refresh the list
+      } else {
+        msg.style.color = "red";
+        msg.textContent = result.message || "Failed to add book.";
       }
-    );
-
-    const data = await res.json();
-
-    if (!res.ok) {
-      container.textContent = data.message || "Failed to load received swaps";
-      return;
+    } catch (err) {
+      console.error(err);
+      msg.style.color = "red";
+      msg.textContent = "Server error.";
+    } finally {
+      // 4. Re-enable the button regardless of success or failure
+      submitBtn.disabled = false;
+      submitBtn.textContent = "Add Book";
     }
-
-    if (!data.requests || data.requests.length === 0) {
-      container.textContent = "No swap requests received.";
-      return;
-    }
-
-    container.innerHTML = "";
-
-    data.requests.forEach(req => {
-      const div = document.createElement("div");
-      div.className = "swap-card";
-      div.innerHTML = `
-        <p><strong>From:</strong> ${req.fromUserName}</p>
-        <p><strong>Book:</strong> ${req.bookTitle}</p>
-        <p><strong>Status:</strong> ${req.status}</p>
-      `;
-      container.appendChild(div);
-    });
-  } catch (err) {
-    console.error("Error loading received swaps:", err);
-    container.textContent = "Error loading received swaps.";
-  }
+  });
 }
 
-// ---------- Swap Requests Sent ----------
-async function loadSwapSent() {
-  const container = document.getElementById("swapSent");
-  container.innerHTML = "Loading...";
+// Handle Deleting a Book with Safety Checks
+async function deleteMyBook(bookId) {
+  // 1. Client-side confirmation
+  if (!confirm("Are you sure you want to permanently delete this book?")) return;
 
   try {
-    const res = await fetch(
-      `http://localhost:5000/dashboard/swap-sent/${userId}`,
-      {
-        headers: {
-          Authorization: `Bearer ${token}`
-        }
-      }
-    );
-
-    const data = await res.json();
-
-    if (!res.ok) {
-      container.textContent = data.message || "Failed to load sent swaps";
-      return;
-    }
-
-    if (!data.requests || data.requests.length === 0) {
-      container.textContent = "No swap requests sent.";
-      return;
-    }
-
-    container.innerHTML = "";
-
-    data.requests.forEach(req => {
-      const div = document.createElement("div");
-      div.className = "swap-card";
-      div.innerHTML = `
-        <p><strong>To:</strong> ${req.toUserName}</p>
-        <p><strong>Book:</strong> ${req.bookTitle}</p>
-        <p><strong>Status:</strong> ${req.status}</p>
-      `;
-      container.appendChild(div);
+    const res = await fetch(`/dashboard/my-books/${userId}/${bookId}`, {
+      method: "DELETE",
+      headers: { Authorization: `Bearer ${token}` }
     });
+    const result = await res.json();
+
+    if (result.success) {
+      loadMyBooks(); // Instantly refresh the list to reflect deletion
+    } else {
+      // If the backend blocked it (e.g., currently borrowed), show the backend error message
+      alert(result.message || "Failed to delete book.");
+    }
   } catch (err) {
-    console.error("Error loading sent swaps:", err);
-    container.textContent = "Error loading sent swaps.";
+    console.error(err);
+    alert("Error deleting book.");
   }
 }
