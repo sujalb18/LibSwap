@@ -159,6 +159,22 @@ describe('Circulation history and reservations', () => {
         await act(book, 'borrow', bob).expect(200);
     });
 
+    test('shows overdue status and protects active loans and their history from staff edits/deletion', async () => {
+        const alice = await student('alice');
+        const book = await Book.create({ title: 'Overdue', author: 'Author' });
+        await act(book, 'borrow', alice).expect(200);
+        const past = new Date(Date.now() - 86400000);
+        await Book.updateOne({ _id: book._id }, { $set: { dueAt: past, 'loanHistory.0.dueAt': past } });
+        const snapshot = (await state(alice)).body;
+        expect(snapshot.data[0].loanStatus).toBe('overdue');
+        expect(snapshot.history[0].status).toBe('overdue');
+        await request(app).put(`/api/books/${book._id}`).set('Authorization', `Bearer ${staffToken}`)
+            .send({ title: book.title, author: book.author, available: true }).expect(409);
+        await request(app).delete(`/api/books/${book._id}`).set('Authorization', `Bearer ${staffToken}`).expect(409);
+        await act(book, 'return', alice).expect(200);
+        await request(app).delete(`/api/books/${book._id}`).set('Authorization', `Bearer ${staffToken}`).expect(409);
+    });
+
 
 });
 
