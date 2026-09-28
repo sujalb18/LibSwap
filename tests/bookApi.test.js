@@ -131,6 +131,22 @@ describe('Circulation history and reservations', () => {
         app.set('io', undefined);
     });
 
+    test('prevents simultaneous double loans and duplicate reservations', async () => {
+        const [alice, bob, charlie] = await Promise.all(['alice', 'bob', 'charlie'].map(student));
+        const book = await Book.create({ title: 'Concurrent Book', author: 'Author' });
+        const loans = await Promise.all([act(book, 'borrow', alice), act(book, 'borrow', bob)]);
+        expect(loans.map(r => r.status).sort()).toEqual([200, 409]);
+        const reservations = await Promise.all([act(book, 'reserve', charlie), act(book, 'reserve', charlie)]);
+        expect(reservations.map(r => r.status).sort()).toEqual([200, 409]);
+        const stored = await Book.findById(book._id).select('+loanHistory +reservationQueue');
+        expect(stored.loanHistory).toHaveLength(1);
+        expect(stored.reservationQueue).toHaveLength(1);
+        const owner = loans[0].status === 200 ? alice : bob;
+        const returns = await Promise.all([act(book, 'return', owner), act(book, 'return', owner)]);
+        expect(returns.map(r => r.status).sort()).toEqual([200, 409]);
+        expect(await Notification.countDocuments({ user: charlie.id })).toBe(1);
+    });
+
 
 });
 
