@@ -2,6 +2,7 @@ const express = require("express");
 const Book = require("../models/Book.js");
 const SwapRequest = require("../models/SwapRequest.js");
 const authMiddleware = require("../middleware/authMiddleware.js");
+const { circulationView } = require('../controllers/borrowController');
 
 const router = express.Router();
 
@@ -74,8 +75,8 @@ router.get("/borrowed/:userId", authMiddleware, async (req, res) => {
       });
     }
 
-    const books = await Book.find({ borrowedBy: userId });
-    return res.status(200).json({ success: true, data: books });
+    const books = await Book.find({ borrowedBy: userId }).select('+reservationQueue').lean();
+    return res.status(200).json({ success: true, data: books.map(book => circulationView(book, userId)) });
   } catch (error) {
     console.error("Dashboard borrowed error:", error);
     return res.status(500).json({ success: false, message: "Server error" });
@@ -97,8 +98,9 @@ router.get("/reservations/:userId", authMiddleware, async (req, res) => {
       });
     }
 
-    const books = await Book.find({ reservedBy: userId });
-    return res.status(200).json({ success: true, data: books });
+    const books = await Book.find({ $or: [{ reservedBy: userId }, { 'reservationQueue.user': userId }] })
+      .select('+reservationQueue').lean();
+    return res.status(200).json({ success: true, data: books.map(book => circulationView(book, userId)) });
   } catch (error) {
     console.error("Dashboard reservations error:", error);
     return res.status(500).json({ success: false, message: "Server error" });

@@ -2,6 +2,34 @@
 
 Library Management and Student Book Swapping System
 
+## Borrowing history and reservations
+
+Sign in at `/login.html`, then open `/dashboard.html`.
+**Borrowed Books** shows current loans, due dates, overdue status and borrowing history.
+Use **Return book** to finish a loan. New loans last 14 days; older loans without
+dates display “Not recorded” rather than an invented due date.
+
+**Your Reservations** shows waiting/ready status and your position in the first-come
+queue, without exposing other students' identities. When a book is returned, the
+first student receives an in-app notification and can borrow it from this section.
+The book remains unavailable to other students until the queue is served.
+Existing Socket.IO events refresh dashboard and catalogue availability. Use
+**Refresh status** if the live connection is interrupted.
+
+Authenticated endpoints:
+
+- `GET /api/books/circulation`: your loan history, book actions and queue positions.
+- `POST /api/books/borrow/:bookId`: borrow an available book or your ready reservation.
+- `POST /api/books/return/:bookId`: return your current loan.
+- `POST /api/books/reserve/:bookId`: join an unavailable book's reservation queue.
+
+Library staff cannot mark a borrowed book available or delete a book with loan
+history. Marking an unavailable, unborrowed book available alerts its first queued
+student. Personal swap books remain separate from library borrowing.
+
+Run `npm test` for the existing suite, or `npm test -- --runTestsByPath tests/bookApi.test.js`
+for book and circulation integration tests. Tests use temporary MongoDB databases.
+
 
 # Swap Request Dashboard
 

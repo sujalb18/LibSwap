@@ -1,3 +1,11 @@
+/* Circulation uses the dashboard's existing colours and button styles. */
+#circulation-message, #reservation-alert { color: #1e3d59; }
+#circulation-message:empty, #reservation-alert:empty { display: none; }
+#reservation-alert { padding: 12px; background: #e7f4e9; border-radius: 6px; }
+.loan-overdue { color: #a51d28; font-weight: bold; }
+.circulation-card { margin: 12px 0; padding: 16px; border: 1px solid #ddd; border-radius: 8px; }
+.action-btn:disabled { opacity: 0.6; cursor: wait; }
+.sidebar a { color: inherit; text-decoration: none; }
 /* Global Layout */
 * {
   box-sizing: border-box;
