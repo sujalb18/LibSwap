@@ -189,7 +189,22 @@ describe('Circulation history and reservations', () => {
         expect(await Notification.countDocuments({ user: alice.id })).toBe(1);
     });
 
-
+    test('rejects unauthenticated, invalid and personal-book actions; dashboard reveals only own position', async () => {
+        const [alice, bob] = await Promise.all(['alice', 'bob'].map(student));
+        const book = await Book.create({ title: 'Private', author: 'Author', ownerId: alice.id });
+        await act(book, 'borrow', bob).expect(404);
+        await act(book, 'reserve', bob).expect(404);
+        await request(app).get('/api/books/circulation').expect(401);
+        await request(app).post('/api/books/borrow/invalid').set('Authorization', `Bearer ${alice.token}`).expect(400);
+        await act({ _id: new mongoose.Types.ObjectId() }, 'borrow', alice).expect(404);
+        const libraryBook = await Book.create({ title: 'Library', author: 'Author' });
+        await act(libraryBook, 'borrow', alice).expect(200);
+        await act(libraryBook, 'reserve', bob).expect(200);
+        const dashboard = await request(app).get(`/dashboard/reservations/${bob.id}`).set('Authorization', `Bearer ${bob.token}`).expect(200);
+        expect(dashboard.body.data[0].reservationPosition).toBe(1);
+        expect(dashboard.body.data[0].reservationQueue).toBeUndefined();
+        await request(app).get(`/dashboard/borrowed/${alice.id}`).set('Authorization', `Bearer ${bob.token}`).expect(403);
+    });
 });
 
 describe('Book API automated tests', () => {
