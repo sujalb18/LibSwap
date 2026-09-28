@@ -43,6 +43,7 @@ const bookSchema = new mongoose.Schema(
             default: null
         },
 
+        borrowedAt: { type: Date, default: null },
         reservedBy: {
             type: mongoose.Schema.Types.ObjectId,
             ref: 'User',
