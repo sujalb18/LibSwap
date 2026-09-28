@@ -2,6 +2,7 @@ const express = require('express');
 
 const authRoutes = require('./routes/authRoutes');
 const bookRoutes = require('./routes/bookRoutes');
+const reviewRoutes = require('./routes/reviewRoutes');
 const bookRequestRoutes = require('./routes/bookRequestRoutes');
 const notificationRoutes = require('./routes/notificationRoutes');
 const dashboardRoutes = require('./routes/dashboardRoutes');
@@ -27,6 +28,7 @@ app.use('/api/book-requests', bookRequestRoutes);
 app.use('/api/notifications', notificationRoutes);
 
 app.use('/dashboard', dashboardRoutes);
+app.use('/api', reviewRoutes);
 app.use('/api/moderation', moderationRoutes);
 app.use('/swap', swapRoutes);
 
