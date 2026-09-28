@@ -1,4 +1,20 @@
-const Book = require("../models/Book");
+const mongoose = require('mongoose');
+const Book = require('../models/Book');
+const User = require('../models/User');
+const { createNotification } = require('./notificationController');
+
+const LOAN_DAYS = 14;
+const privateFields = '+loanHistory +reservationQueue +circulationVersion';
+const sameUser = (left, right) => Boolean(left && right) && String(left) === String(right);
+
+// Older records have only reservedBy; preserve their place at the front.
+const getQueue = book => {
+  const queue = [...(book.reservationQueue || [])];
+  if (book.reservedBy && !queue.some(entry => sameUser(entry.user, book.reservedBy))) {
+    queue.unshift({ user: book.reservedBy, reservedAt: null, readyAt: book.borrowedBy ? null : (book.updatedAt || new Date(0)) });
+  }
+  return queue;
+};
 
 exports.borrowBook = async (req, res) => {
   try {
