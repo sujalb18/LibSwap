@@ -1,16 +1,64 @@
 const express = require('express');
 const router = express.Router();
 
-const { getBooks } = require('../controllers/bookController');
-const authMiddleware = require('../middleware/authMiddleware');
-const { getCirculation, borrowBook, returnBook, reserveBook } = require('../controllers/circulationController');
+const {
+    getBooks,
+    createBook,
+    updateBook,
+    deleteBook
+} = require('../controllers/bookController');
 
-// This route gets all books or searches books using ?search=
+const { borrowBook, returnBook, getCirculation } = require('../controllers/borrowController');
+const { reserveBook } = require('../controllers/reserveController');
+
+const authMiddleware = require('../middleware/authMiddleware');
+const staffOnly = require('../middleware/staffOnly');
+
+// Anyone can browse or search the library catalogue
 router.get('/', getBooks);
 router.get('/circulation', authMiddleware, getCirculation);
-router.post('/:id/borrow', authMiddleware, borrowBook);
-router.post('/:id/return', authMiddleware, returnBook);
-router.post('/:id/reserve', authMiddleware, reserveBook);
+router.post('/return/:bookId', authMiddleware, returnBook);
 
-// Exporting the router so server.js can use it
+// Only authenticated staff can add library books
+router.post(
+    '/',
+    authMiddleware,
+    staffOnly,
+    createBook
+);
+
+// Only authenticated staff can update library books
+router.put(
+    '/:id',
+    authMiddleware,
+    staffOnly,
+    updateBook
+);
+
+// Only authenticated staff can delete library books
+router.delete(
+    '/:id',
+    authMiddleware,
+    staffOnly,
+    deleteBook
+);
+
+/* -------------------------------------------
+   ⭐ STUDENT ACTIONS (Borrow + Reserve)
+-------------------------------------------- */
+
+// Borrow a book
+router.post(
+    '/borrow/:bookId',
+    authMiddleware,
+    borrowBook
+);
+
+// Reserve a book
+router.post(
+    '/reserve/:bookId',
+    authMiddleware,
+    reserveBook
+);
+
 module.exports = router;

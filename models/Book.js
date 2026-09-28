@@ -29,10 +29,50 @@ const bookSchema = new mongoose.Schema(
             default: true
         },
 
-        // Keep the loan and queue in one document so changes are atomic.
-        borrower: { type: mongoose.Schema.Types.ObjectId, ref: 'User', default: null, select: false },
-        borrowedAt: { type: Date, default: null, select: false },
-        reservations: { type: [mongoose.Schema.Types.ObjectId], ref: 'User', default: [], select: false }
+        // fields for Student Dashboard + Swap Requests
+
+                ownerId: {
+            type: mongoose.Schema.Types.ObjectId,
+            ref: 'User',
+            required: false
+        },
+
+        borrowedBy: {
+            type: mongoose.Schema.Types.ObjectId,
+            ref: 'User',
+            default: null
+        },
+
+        borrowedAt: { type: Date, default: null },
+        dueAt: { type: Date, default: null },
+        // Private circulation data stays out of public catalogue responses.
+        loanHistory: {
+            type: [{
+                user: { type: mongoose.Schema.Types.ObjectId, ref: 'User', required: true },
+                borrowedAt: Date,
+                dueAt: Date,
+                returnedAt: { type: Date, default: null }
+            }],
+            default: [],
+            select: false
+        },
+        reservationQueue: {
+            type: [{
+                user: { type: mongoose.Schema.Types.ObjectId, ref: 'User', required: true },
+                reservedAt: { type: Date, default: Date.now },
+                readyAt: { type: Date, default: null }
+            }],
+            default: [],
+            select: false
+        },
+        circulationVersion: { type: Number, default: 0, select: false },
+        // Keep the first reservation here for existing dashboard integrations.
+        reservedBy: {
+            type: mongoose.Schema.Types.ObjectId,
+            ref: 'User',
+            default: null
+        }
+
     },
     {
         // MongoDB will automatically save createdAt and updatedAt
