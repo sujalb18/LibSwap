@@ -147,6 +147,18 @@ describe('Circulation history and reservations', () => {
         expect(await Notification.countDocuments({ user: charlie.id })).toBe(1);
     });
 
+    test('supports older records without dates or queues and keeps their existing reservation first', async () => {
+        const [alice, bob] = await Promise.all(['alice', 'bob'].map(student));
+        const inserted = await Book.collection.insertOne({ title: 'Old Loan', author: 'Author', available: false,
+            borrowedBy: new mongoose.Types.ObjectId(alice.id), reservedBy: new mongoose.Types.ObjectId(bob.id) });
+        const book = { _id: inserted.insertedId };
+        await act(book, 'return', alice).expect(200);
+        const history = (await state(alice)).body.history;
+        expect(history[0]).toMatchObject({ borrowedAt: null, dueAt: null, status: 'returned' });
+        expect((await state(bob)).body.data[0]).toMatchObject({ reservationPosition: 1, reservationStatus: 'ready' });
+        await act(book, 'borrow', bob).expect(200);
+    });
+
 
 });
 
