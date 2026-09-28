@@ -175,6 +175,20 @@ describe('Circulation history and reservations', () => {
         await request(app).delete(`/api/books/${book._id}`).set('Authorization', `Bearer ${staffToken}`).expect(409);
     });
 
+    test('staff making an unavailable book ready notifies its first reservation without opening it to others', async () => {
+        const alice = await student('alice');
+        const book = await Book.create({ title: 'Unavailable', author: 'Author', available: false });
+        await act(book, 'reserve', alice).expect(200);
+        expect((await state(alice)).body.data[0].reservationStatus).toBe('waiting');
+        await act(book, 'borrow', alice).expect(409);
+        const edit = () => request(app).put(`/api/books/${book._id}`).set('Authorization', `Bearer ${staffToken}`)
+            .send({ title: book.title, author: book.author, available: true });
+        await edit().expect(200);
+        await edit().expect(200);
+        expect((await state(alice)).body.data[0]).toMatchObject({ available: false, canBorrow: true, reservationStatus: 'ready' });
+        expect(await Notification.countDocuments({ user: alice.id })).toBe(1);
+    });
+
 
 });
 
