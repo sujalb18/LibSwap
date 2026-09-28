@@ -94,6 +94,14 @@ exports.acceptSwapRequest = async (req, res) => {
     const requestedBook = swap.requestedBookId;
     const offeredBook = swap.offeredBookId;
 
+    if (requestedBook.borrowedBy || requestedBook.reservedBy || 
+    offeredBook.borrowedBy || offeredBook.reservedBy) {
+      return res.status(400).json({ 
+        success: false, 
+        message: "Cannot accept swap: One or both books are currently borrowed or reserved by another user." 
+      });
+    }
+
     const tempOwner = requestedBook.ownerId;
     requestedBook.ownerId = offeredBook.ownerId;
     offeredBook.ownerId = tempOwner;
