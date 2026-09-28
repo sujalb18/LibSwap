@@ -43,6 +43,30 @@ const bookSchema = new mongoose.Schema(
             default: null
         },
 
+        borrowedAt: { type: Date, default: null },
+        dueAt: { type: Date, default: null },
+        // Private circulation data stays out of public catalogue responses.
+        loanHistory: {
+            type: [{
+                user: { type: mongoose.Schema.Types.ObjectId, ref: 'User', required: true },
+                borrowedAt: Date,
+                dueAt: Date,
+                returnedAt: { type: Date, default: null }
+            }],
+            default: [],
+            select: false
+        },
+        reservationQueue: {
+            type: [{
+                user: { type: mongoose.Schema.Types.ObjectId, ref: 'User', required: true },
+                reservedAt: { type: Date, default: Date.now },
+                readyAt: { type: Date, default: null }
+            }],
+            default: [],
+            select: false
+        },
+        circulationVersion: { type: Number, default: 0, select: false },
+        // Keep the first reservation here for existing dashboard integrations.
         reservedBy: {
             type: mongoose.Schema.Types.ObjectId,
             ref: 'User',

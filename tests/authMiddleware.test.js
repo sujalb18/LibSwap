@@ -4,7 +4,7 @@ const jwt = require('jsonwebtoken');
 process.env.JWT_SECRET = 'test_secret_key';
 process.env.JWT_EXPIRES_IN = '1d';
 
-const app = require('../server');
+const app = require('../app');
 
 describe('JWT Authentication Middleware', () => {
 

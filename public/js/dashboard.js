@@ -14,8 +14,7 @@ if (!userId || !token) {
 // Load initial dashboard sections
 loadMyBooks();
 loadStudentInfo();
-loadBorrowedBooks();
-loadReservations();
+loadCirculation();
 loadSwapRequests();
 
 /* -------------------------------------------
@@ -45,63 +44,138 @@ function loadStudentInfo() {
   document.getElementById("ui-role").textContent = role;
 }
 
-/* -------------------------------------------
-   BORROWED BOOKS
--------------------------------------------- */
-async function loadBorrowedBooks() {
-  const list = document.getElementById("borrowed-list");
+// All circulation screens use the same authenticated snapshot.
+async function circulationRequest(url, options = {}) {
+  const response = await fetch(url, {
+    ...options,
+    headers: { Authorization: `Bearer ${token}` }
+  });
+  const result = await response.json();
+  if (response.status === 401) {
+    window.location.href = 'login.html';
+    throw new Error('Your session expired. Please sign in.');
+  }
+  if (!response.ok || !result.success) throw new Error(result.message || 'Unable to load books.');
+  return result;
+}
 
+function circulationText(tag, text) {
+  const element = document.createElement(tag);
+  element.textContent = text;
+  return element;
+}
+
+function loanDate(value) {
+  return value ? new Date(value).toLocaleDateString() : 'Not recorded (older loan)';
+}
+
+async function loadCirculation() {
+  const targets = ['borrowed-list', 'borrowing-history', 'reservation-list', 'borrow-books-container', 'reserve-books-container'];
+  const requestNumber = (loadCirculation.requestNumber || 0) + 1;
+  loadCirculation.requestNumber = requestNumber;
+  targets.forEach(id => document.getElementById(id).setAttribute('aria-busy', 'true'));
   try {
-    const res = await fetch(`/dashboard/borrowed/${userId}`, {
-      headers: { Authorization: `Bearer ${token}` }
+    const result = await circulationRequest('/api/books/circulation');
+    if (requestNumber !== loadCirculation.requestNumber) return;
+    const borrowed = document.getElementById('borrowed-list');
+    const reservations = document.getElementById('reservation-list');
+    const history = document.getElementById('borrowing-history');
+    targets.forEach(id => document.getElementById(id).replaceChildren());
+
+    result.data.filter(book => book.borrowedByMe).forEach(book => {
+      const item = circulationText('li', '');
+      item.append(circulationText('strong', `${book.title} by ${book.author}`));
+      const status = circulationText('p', `${book.loanStatus === 'overdue' ? 'Overdue' : 'Borrowed'} · Due: ${loanDate(book.dueAt)}`);
+      if (book.loanStatus === 'overdue') status.className = 'loan-overdue';
+      item.append(status, circulationText('p', `Borrowed: ${loanDate(book.borrowedAt)}`),
+        circulationButton(book._id, 'return', 'Return book'));
+      borrowed.append(item);
     });
+    if (!borrowed.children.length) borrowed.append(circulationText('li', 'You have no borrowed books.'));
 
-    const result = await res.json();
+    result.history.forEach(loan => {
+      const item = circulationText('li', '');
+      const status = { returned: 'Returned', borrowed: 'Borrowed', overdue: 'Overdue' }[loan.status];
+      item.append(circulationText('strong', loan.title),
+        circulationText('p', `${status} · Borrowed: ${loanDate(loan.borrowedAt)} · Due: ${loanDate(loan.dueAt)}`));
+      if (loan.returnedAt) item.append(circulationText('p', `Returned: ${loanDate(loan.returnedAt)}`));
+      history.append(item);
+    });
+    if (!history.children.length) history.append(circulationText('li', 'No borrowing history recorded yet.'));
 
-    if (!result.success || result.data.length === 0) {
-      list.innerHTML = "<li>No books borrowed yet.</li>";
-      return;
+    const mine = result.data.filter(book => book.reservationPosition);
+    mine.forEach(book => {
+      const item = circulationText('li', '');
+      item.append(circulationText('strong', book.title),
+        circulationText('p', `${book.reservationStatus === 'ready' ? 'Ready to borrow' : 'Waiting'} · Queue position ${book.reservationPosition} of ${book.reservationCount}`));
+      if (book.canBorrow) item.append(circulationButton(book._id, 'borrow', 'Borrow reserved book'));
+      reservations.append(item);
+    });
+    if (!reservations.children.length) reservations.append(circulationText('li', 'You have no reservations.'));
+    const ready = mine.filter(book => book.reservationStatus === 'ready');
+    document.getElementById('reservation-alert').textContent = ready.length
+      ? `Ready for you: ${ready.map(book => book.title).join(', ')}. Open Your Reservations to borrow.` : '';
+
+    renderCirculationChoices(result.data.filter(book => book.canBorrow), 'borrow-books-container', 'borrow');
+    renderCirculationChoices(result.data.filter(book => book.canReserve), 'reserve-books-container', 'reserve');
+    await loadCirculationNotificationCount();
+  } catch (error) {
+    if (requestNumber !== loadCirculation.requestNumber) return;
+    targets.forEach(id => document.getElementById(id).replaceChildren(circulationText('p', error.message)));
+  } finally {
+    if (requestNumber === loadCirculation.requestNumber) {
+      targets.forEach(id => document.getElementById(id).setAttribute('aria-busy', 'false'));
     }
-
-    list.innerHTML = "";
-    result.data.forEach(book => {
-      const li = document.createElement("li");
-      li.textContent = `${book.title} by ${book.author}`;
-      list.appendChild(li);
-    });
-
-  } catch (err) {
-    list.innerHTML = "<li>Error loading borrowed books.</li>";
   }
 }
 
-/* -------------------------------------------
-   RESERVATIONS
--------------------------------------------- */
-async function loadReservations() {
-  const list = document.getElementById("reservation-list");
+function renderCirculationChoices(books, containerId, action) {
+  const container = document.getElementById(containerId);
+  books.forEach(book => {
+    const card = circulationText('article', '');
+    card.className = 'book-card circulation-card';
+    card.append(circulationText('h3', book.title), circulationText('p', book.author));
+    if (action === 'reserve') card.append(circulationText('p', `Unavailable · ${book.reservationCount} in queue`));
+    else if (book.reservationStatus === 'ready') card.append(circulationText('p', 'Held for your reservation'));
+    card.append(circulationButton(book._id, action, action === 'borrow' ? 'Borrow book' : 'Reserve book'));
+    container.append(card);
+  });
+  if (!books.length) container.append(circulationText('p',
+    action === 'borrow' ? 'No books are available for you to borrow.' : 'No unavailable books to reserve.'));
+}
 
+function circulationButton(bookId, action, label) {
+  const button = circulationText('button', label);
+  button.type = 'button';
+  button.className = 'action-btn';
+  button.addEventListener('click', async () => {
+    if (button.disabled) return;
+    button.disabled = true;
+    const message = document.getElementById('circulation-message');
+    message.textContent = 'Saving...';
+    try {
+      const result = await circulationRequest(`/api/books/${action}/${bookId}`, { method: 'POST' });
+      message.textContent = result.message;
+    } catch (error) {
+      message.textContent = error.message;
+    } finally {
+      await loadCirculation();
+      button.disabled = false;
+    }
+  });
+  return button;
+}
+
+async function loadCirculationNotificationCount() {
   try {
-    const res = await fetch(`/dashboard/reservations/${userId}`, {
+    const response = await fetch('/api/notifications/unread-count', {
       headers: { Authorization: `Bearer ${token}` }
     });
-
-    const result = await res.json();
-
-    if (!result.success || result.data.length === 0) {
-      list.innerHTML = "<li>No reservations yet.</li>";
-      return;
-    }
-
-    list.innerHTML = "";
-    result.data.forEach(book => {
-      const li = document.createElement("li");
-      li.textContent = `${book.title} by ${book.author}`;
-      list.appendChild(li);
-    });
-
-  } catch (err) {
-    list.innerHTML = "<li>Error loading reservations.</li>";
+    if (!response.ok) return;
+    const result = await response.json();
+    document.getElementById('circulation-unread').textContent = result.unreadCount ? `(${result.unreadCount})` : '';
+  } catch {
+    // Notification availability does not prevent borrowing or returning.
   }
 }
 
@@ -238,106 +312,28 @@ function attachSwapButtons() {
   });
 }
 
-/* -------------------------------------------
-   BORROW A BOOK — SHOW LIST
--------------------------------------------- */
-document.getElementById("loadBorrowBooksBtn").addEventListener("click", () => {
-  document.getElementById("borrow-section").classList.add("active");
-  loadBorrowableBooks();
+// Reuse the existing dashboard sections rather than introducing new pages.
+for (const [buttonId, sectionId] of [
+  ['loadBorrowBooksBtn', 'borrow-section'],
+  ['loadReservationBooksBtn', 'reserve-section']
+]) {
+  document.getElementById(buttonId).addEventListener('click', () => {
+    document.querySelectorAll('.section').forEach(section => section.classList.remove('active'));
+    document.getElementById(sectionId).classList.add('active');
+    loadCirculation();
+  });
+}
+document.getElementById('refreshCirculationBtn').addEventListener('click', loadCirculation);
+document.querySelectorAll('.sidebar [data-section]').forEach(item => {
+  item.addEventListener('click', () => {
+    if (['borrowed-books', 'reservations'].includes(item.dataset.section)) loadCirculation();
+  });
 });
-
-async function loadBorrowableBooks() {
-  const container = document.getElementById("borrow-books-container");
-  container.innerHTML = "Loading...";
-
-  const res = await fetch(`/api/books`, {
-    headers: { Authorization: `Bearer ${token}` }
-  });
-
-  const books = await res.json();
-  const available = books.filter(b => b.available && !b.borrowedBy);
-
-  container.innerHTML = "";
-
-  available.forEach(book => {
-    const div = document.createElement("div");
-    div.className = "book-card";
-    div.innerHTML = `
-      <h3>${book.title}</h3>
-      <p>${book.author}</p>
-      <button class="borrow-btn" data-id="${book._id}">Borrow</button>
-    `;
-    container.appendChild(div);
-  });
-
-  attachBorrowButtons();
-}
-
-function attachBorrowButtons() {
-  document.querySelectorAll(".borrow-btn").forEach(btn => {
-    btn.addEventListener("click", async () => {
-      const res = await fetch(`/api/books/borrow/${btn.dataset.id}`, {
-        method: "POST",
-        headers: { Authorization: `Bearer ${token}` }
-      });
-
-      const result = await res.json();
-      alert(result.message);
-
-      loadBorrowedBooks();
-    });
-  });
-}
-
-/* -------------------------------------------
-   RESERVE A BOOK — SHOW LIST
--------------------------------------------- */
-document.getElementById("loadReservationBooksBtn").addEventListener("click", () => {
-  document.getElementById("reserve-section").classList.add("active");
-  loadReservableBooks();
-});
-
-async function loadReservableBooks() {
-  const container = document.getElementById("reserve-books-container");
-  container.innerHTML = "Loading...";
-
-  const res = await fetch(`/api/books`, {
-    headers: { Authorization: `Bearer ${token}` }
-  });
-
-  const books = await res.json();
-  const reservable = books.filter(b => !b.borrowedBy && !b.reservedBy);
-
-  container.innerHTML = "";
-
-  reservable.forEach(book => {
-    const div = document.createElement("div");
-    div.className = "book-card";
-    div.innerHTML = `
-      <h3>${book.title}</h3>
-      <p>${book.author}</p>
-      <button class="reserve-btn" data-id="${book._id}">Reserve</button>
-    `;
-    container.appendChild(div);
-  });
-
-  attachReserveButtons();
-}
-
-function attachReserveButtons() {
-  document.querySelectorAll(".reserve-btn").forEach(btn => {
-    btn.addEventListener("click", async () => {
-      const res = await fetch(`/api/books/reserve/${btn.dataset.id}`, {
-        method: "POST",
-        headers: { Authorization: `Bearer ${token}` }
-      });
-
-      const result = await res.json();
-      alert(result.message);
-
-      loadReservations();
-    });
-  });
+window.addEventListener('focus', loadCirculation);
+if (typeof io === 'function') {
+  const circulationSocket = io();
+  circulationSocket.on('booksChanged', loadCirculation);
+  circulationSocket.on('connect', loadCirculation);
 }
 
 /* -------------------------------------------

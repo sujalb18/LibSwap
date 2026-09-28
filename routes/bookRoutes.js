@@ -8,7 +8,7 @@ const {
     deleteBook
 } = require('../controllers/bookController');
 
-const { borrowBook } = require('../controllers/borrowController');
+const { borrowBook, returnBook, getCirculation } = require('../controllers/borrowController');
 const { reserveBook } = require('../controllers/reserveController');
 
 const authMiddleware = require('../middleware/authMiddleware');
@@ -16,6 +16,8 @@ const staffOnly = require('../middleware/staffOnly');
 
 // Anyone can browse or search the library catalogue
 router.get('/', getBooks);
+router.get('/circulation', authMiddleware, getCirculation);
+router.post('/return/:bookId', authMiddleware, returnBook);
 
 // Only authenticated staff can add library books
 router.post(

@@ -4,10 +4,10 @@ const bcrypt = require('bcryptjs');
 process.env.JWT_SECRET = 'test_secret_key';
 process.env.JWT_EXPIRES_IN = '1d';
 
-jest.mock('../model/User');
+jest.mock('../models/User');
 
-const User = require('../model/User');
-const app = require('../server');
+const User = require('../models/User');
+const app = require('../app');
 
 describe('Authentication API', () => {
     beforeEach(() => {
