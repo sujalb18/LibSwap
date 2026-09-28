@@ -65,6 +65,8 @@ const bookSchema = new mongoose.Schema(
             default: [],
             select: false
         },
+        circulationVersion: { type: Number, default: 0, select: false },
+        // Keep the first reservation here for existing dashboard integrations.
         reservedBy: {
             type: mongoose.Schema.Types.ObjectId,
             ref: 'User',
