@@ -45,6 +45,17 @@ const bookSchema = new mongoose.Schema(
 
         borrowedAt: { type: Date, default: null },
         dueAt: { type: Date, default: null },
+        // Private circulation data stays out of public catalogue responses.
+        loanHistory: {
+            type: [{
+                user: { type: mongoose.Schema.Types.ObjectId, ref: 'User', required: true },
+                borrowedAt: Date,
+                dueAt: Date,
+                returnedAt: { type: Date, default: null }
+            }],
+            default: [],
+            select: false
+        },
         reservedBy: {
             type: mongoose.Schema.Types.ObjectId,
             ref: 'User',
