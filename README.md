@@ -2,6 +2,21 @@
 
 Library Management and Student Book Swapping System
 
+## Borrowing history and reservations
+
+Sign in at `/login.html`, then open `/dashboard.html`.
+**Borrowed Books** shows current loans, due dates, overdue status and borrowing history.
+Use **Return book** to finish a loan. New loans last 14 days; older loans without
+dates display “Not recorded” rather than an invented due date.
+
+**Your Reservations** shows waiting/ready status and your position in the first-come
+queue, without exposing other students' identities. When a book is returned, the
+first student receives an in-app notification and can borrow it from this section.
+The book remains unavailable to other students until the queue is served.
+Existing Socket.IO events refresh dashboard and catalogue availability. Use
+**Refresh status** if the live connection is interrupted.
+
+
 
 # Swap Request Dashboard
 
