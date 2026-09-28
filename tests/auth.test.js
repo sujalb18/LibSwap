@@ -7,7 +7,7 @@ process.env.JWT_EXPIRES_IN = '1d';
 jest.mock('../models/User');
 
 const User = require('../models/User');
-const app = require('../server');
+const app = require('../app');
 
 describe('Authentication API', () => {
     beforeEach(() => {
