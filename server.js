@@ -31,10 +31,12 @@ mongoose.connect(process.env.MONGODB_URI)
     .then(() => {
         console.log('Connected to MongoDB');
 
-        // Start the HTTP + Socket.IO server
         server.listen(PORT, () => {
             console.log(`Server is running on http://localhost:${PORT}`);
         });
-}
+    })
+    .catch((error) => {
+        console.error('MongoDB connection failed:', error.message);
+    });
 
 module.exports = app;
