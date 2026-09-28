@@ -16,6 +16,27 @@ const getQueue = book => {
   return queue;
 };
 
+const circulationView = (book, userId) => {
+  const queue = getQueue(book);
+  const position = queue.findIndex(entry => sameUser(entry.user, userId));
+  const borrowedByMe = sameUser(book.borrowedBy, userId);
+  const ready = position === 0 && !book.borrowedBy && Boolean(queue[0].readyAt);
+  return {
+    _id: book._id, title: book.title, author: book.author, genre: book.genre,
+    available: book.available && !book.borrowedBy && !queue.length,
+    borrowedByMe,
+    borrowedAt: borrowedByMe ? book.borrowedAt : null,
+    dueAt: borrowedByMe ? book.dueAt : null,
+    loanStatus: borrowedByMe ? (book.dueAt && new Date(book.dueAt) < new Date() ? 'overdue' : 'borrowed') : null,
+    reservationStatus: position < 0 ? null : ready ? 'ready' : 'waiting',
+    reservationPosition: position < 0 ? null : position + 1,
+    reservationCount: queue.length,
+    reservedAt: position < 0 ? null : queue[position].reservedAt,
+    canBorrow: !book.ownerId && !book.borrowedBy && (queue.length ? ready : book.available),
+    canReserve: !book.ownerId && !borrowedByMe && position < 0 && (!book.available || Boolean(book.borrowedBy) || queue.length > 0)
+  };
+};
+
 exports.borrowBook = async (req, res) => {
   try {
     const userId = req.user.userId;   // ⭐ Secure user ID from token
