@@ -194,11 +194,16 @@ const updateBook = async (req, res) => {
 // Delete an existing library book
 const deleteBook = async (req, res) => {
     try {
-        const deletedBook = await Book.findByIdAndDelete(req.params.id);
+        // Keep historical loans available to students after they return a book.
+        const deletedBook = await Book.findOneAndDelete({
+            _id: req.params.id, borrowedBy: null, reservedBy: null,
+            'reservationQueue.0': { $exists: false }, 'loanHistory.0': { $exists: false }
+        });
 
         if (!deletedBook) {
-            return res.status(404).json({
-                message: 'Book not found'
+            const exists = await Book.exists({ _id: req.params.id });
+            return res.status(exists ? 409 : 404).json({
+                message: exists ? 'Books with loans, reservations or borrowing history cannot be deleted.' : 'Book not found'
             });
         }
 
