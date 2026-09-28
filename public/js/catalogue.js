@@ -68,13 +68,42 @@ const displayBooks = (books) => {
         const card = document.createElement('div');
         card.classList.add('book-card');
 
-        // Showing the book information
-        card.innerHTML = `
-            <h2>${book.title}</h2>
-            <p><strong>Author:</strong> ${book.author}</p>
-            <p><strong>Genre:</strong> ${book.genre || 'Not specified'}</p>
-            <p><strong>Availability:</strong> ${book.available ? 'Available' : 'Unavailable'}</p>
-        `;
+        // Book title
+        const title = document.createElement('h2');
+        title.textContent = book.title;
+
+        // Author
+        const author = document.createElement('p');
+        const authorLabel = document.createElement('strong');
+        authorLabel.textContent = 'Author: ';
+        author.appendChild(authorLabel);
+        author.appendChild(document.createTextNode(book.author));
+
+        // Genre
+        const genre = document.createElement('p');
+        const genreLabel = document.createElement('strong');
+        genreLabel.textContent = 'Genre: ';
+        genre.appendChild(genreLabel);
+        genre.appendChild(
+            document.createTextNode(book.genre || 'Not specified')
+        );
+
+        // Availability
+        const availability = document.createElement('p');
+        const availabilityLabel = document.createElement('strong');
+        availabilityLabel.textContent = 'Availability: ';
+        availability.appendChild(availabilityLabel);
+        availability.appendChild(
+            document.createTextNode(
+                book.available ? 'Available' : 'Unavailable'
+            )
+        );
+
+        // Add all book information to the card
+        card.appendChild(title);
+        card.appendChild(author);
+        card.appendChild(genre);
+        card.appendChild(availability);
 
         // Add the card to the page
         bookList.appendChild(card);
