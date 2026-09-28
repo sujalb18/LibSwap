@@ -37,6 +37,24 @@ const circulationView = (book, userId) => {
   };
 };
 
+const getCirculation = async (req, res) => {
+  try {
+    const books = await Book.find({ ownerId: null }).select(privateFields).sort({ title: 1, _id: 1 }).lean();
+    const history = books.flatMap(book => (book.loanHistory || [])
+      .filter(loan => sameUser(loan.user, req.user.userId))
+      .map(loan => ({
+        _id: loan._id, bookId: book._id, title: book.title, author: book.author,
+        borrowedAt: loan.borrowedAt, dueAt: loan.dueAt, returnedAt: loan.returnedAt,
+        status: loan.returnedAt ? 'returned' : loan.dueAt && new Date(loan.dueAt) < new Date() ? 'overdue' : 'borrowed'
+      })))
+      .sort((a, b) => new Date(b.borrowedAt || 0) - new Date(a.borrowedAt || 0));
+    return res.json({ success: true, data: books.map(book => circulationView(book, req.user.userId)), history, loanDays: LOAN_DAYS });
+  } catch (error) {
+    console.error('Circulation lookup failed:', error.message);
+    return res.status(500).json({ success: false, message: 'Unable to load your borrowing information.' });
+  }
+};
+
 exports.borrowBook = async (req, res) => {
   try {
     const userId = req.user.userId;   // ⭐ Secure user ID from token
@@ -70,3 +88,5 @@ exports.borrowBook = async (req, res) => {
     return res.status(500).json({ success: false, message: "Server error" });
   }
 };
+
+exports.getCirculation = getCirculation;
