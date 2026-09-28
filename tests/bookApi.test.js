@@ -9,6 +9,8 @@ process.env.JWT_SECRET = 'libswap-test-secret';
 
 const app = require('../app');
 const Book = require('../models/Book');
+const User = require('../models/User');
+const Notification = require('../models/Notification');
 
 // Give Jest enough time for the temporary MongoDB server
 jest.setTimeout(120000);
@@ -65,6 +67,8 @@ afterEach(async () => {
         mongoose.connection.readyState === 1
     ) {
         await Book.deleteMany({});
+        await User.deleteMany({});
+        await Notification.deleteMany({});
     }
 });
 
