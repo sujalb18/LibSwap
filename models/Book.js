@@ -56,6 +56,15 @@ const bookSchema = new mongoose.Schema(
             default: [],
             select: false
         },
+        reservationQueue: {
+            type: [{
+                user: { type: mongoose.Schema.Types.ObjectId, ref: 'User', required: true },
+                reservedAt: { type: Date, default: Date.now },
+                readyAt: { type: Date, default: null }
+            }],
+            default: [],
+            select: false
+        },
         reservedBy: {
             type: mongoose.Schema.Types.ObjectId,
             ref: 'User',
