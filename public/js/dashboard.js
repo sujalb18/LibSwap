@@ -11,7 +11,7 @@ if (!userId || !token) {
   window.location.href = "login.html";
 }
 
-// load initial sections
+// Load initial dashboard sections
 loadMyBooks();
 loadStudentInfo();
 loadBorrowedBooks();
@@ -19,12 +19,19 @@ loadReservations();
 loadSwapRequests();
 
 /* -------------------------------------------
-   STUDENT INFO (Secured against XSS)
+   LOGOUT BUTTON
+-------------------------------------------- */
+document.getElementById("logoutBtn").addEventListener("click", () => {
+  localStorage.clear();
+  window.location.href = "login.html";
+});
+
+/* -------------------------------------------
+   STUDENT INFO (XSS-safe)
 -------------------------------------------- */
 function loadStudentInfo() {
   const container = document.getElementById("student-details");
-  
-  // Build the HTML structure safely (NO user variables here)
+
   container.innerHTML = `
     <p><strong>Name:</strong> <span id="ui-name"></span></p>
     <p><strong>Username:</strong> <span id="ui-username"></span></p>
@@ -32,16 +39,14 @@ function loadStudentInfo() {
     <p><strong>Role:</strong> <span id="ui-role"></span></p>
   `;
 
-  // Inject the data using textContent to prevent script execution
   document.getElementById("ui-name").textContent = fullName;
   document.getElementById("ui-username").textContent = username;
   document.getElementById("ui-email").textContent = email;
   document.getElementById("ui-role").textContent = role;
 }
 
-
 /* -------------------------------------------
-   BORROWED BOOKS (Secured against XSS)
+   BORROWED BOOKS
 -------------------------------------------- */
 async function loadBorrowedBooks() {
   const list = document.getElementById("borrowed-list");
@@ -61,7 +66,7 @@ async function loadBorrowedBooks() {
     list.innerHTML = "";
     result.data.forEach(book => {
       const li = document.createElement("li");
-      li.textContent = `${book.title} by ${book.author}`; // Safe injection
+      li.textContent = `${book.title} by ${book.author}`;
       list.appendChild(li);
     });
 
@@ -71,7 +76,7 @@ async function loadBorrowedBooks() {
 }
 
 /* -------------------------------------------
-   RESERVATIONS (Secured against XSS)
+   RESERVATIONS
 -------------------------------------------- */
 async function loadReservations() {
   const list = document.getElementById("reservation-list");
@@ -91,7 +96,7 @@ async function loadReservations() {
     list.innerHTML = "";
     result.data.forEach(book => {
       const li = document.createElement("li");
-      li.textContent = `${book.title} by ${book.author}`; // Safe injection
+      li.textContent = `${book.title} by ${book.author}`;
       list.appendChild(li);
     });
 
@@ -101,7 +106,7 @@ async function loadReservations() {
 }
 
 /* -------------------------------------------
-   SWAP REQUESTS (Secured against XSS)
+   SWAP REQUESTS
 -------------------------------------------- */
 async function loadSwapRequests() {
   const sentList = document.getElementById("swap-sent-list");
@@ -123,79 +128,72 @@ async function loadSwapRequests() {
     const { sent, received } = result.data;
 
     /* ----- SENT REQUESTS ----- */
-    if (sent.length === 0) {
-      sentList.innerHTML = "<li>No sent swap requests.</li>";
-    } else {
-      sentList.innerHTML = "";
-      sent.forEach(req => {
-        const li = document.createElement("li");
-        li.className = "swap-card";
+    sentList.innerHTML = sent.length === 0 ? "<li>No sent swap requests.</li>" : "";
 
-        // Safely build the contents
-        const p1 = document.createElement("p");
-        p1.innerHTML = "<strong>You requested:</strong> ";
-        p1.appendChild(document.createTextNode(req.requestedBookId.title));
+    sent.forEach(req => {
+      const li = document.createElement("li");
+      li.className = "swap-card";
 
-        const p2 = document.createElement("p");
-        p2.innerHTML = "<strong>You offered:</strong> ";
-        p2.appendChild(document.createTextNode(req.offeredBookId.title));
+      const p1 = document.createElement("p");
+      p1.innerHTML = "<strong>You requested:</strong> ";
+      p1.appendChild(document.createTextNode(req.requestedBookId.title));
 
-        const p3 = document.createElement("p");
-        p3.innerHTML = `<strong>Status:</strong> ${req.status}`;
+      const p2 = document.createElement("p");
+      p2.innerHTML = "<strong>You offered:</strong> ";
+      p2.appendChild(document.createTextNode(req.offeredBookId.title));
 
-        li.append(p1, p2, p3);
+      const p3 = document.createElement("p");
+      p3.innerHTML = `<strong>Status:</strong> ${req.status}`;
 
-        if (req.status === "pending") {
-          const btn = document.createElement("button");
-          btn.className = "cancel-btn";
-          btn.dataset.id = req._id;
-          btn.textContent = "Cancel";
-          li.appendChild(btn);
-        }
+      li.append(p1, p2, p3);
 
-        sentList.appendChild(li);
-      });
-    }
+      if (req.status === "pending") {
+        const btn = document.createElement("button");
+        btn.className = "cancel-btn";
+        btn.dataset.id = req._id;
+        btn.textContent = "Cancel";
+        li.appendChild(btn);
+      }
+
+      sentList.appendChild(li);
+    });
 
     /* ----- RECEIVED REQUESTS ----- */
-    if (received.length === 0) {
-      receivedList.innerHTML = "<li>No received swap requests.</li>";
-    } else {
-      receivedList.innerHTML = "";
-      received.forEach(req => {
-        const li = document.createElement("li");
-        li.className = "swap-card";
+    receivedList.innerHTML = received.length === 0 ? "<li>No received swap requests.</li>" : "";
 
-        const p1 = document.createElement("p");
-        p1.innerHTML = "<strong>Requested from you:</strong> ";
-        p1.appendChild(document.createTextNode(req.requestedBookId.title));
+    received.forEach(req => {
+      const li = document.createElement("li");
+      li.className = "swap-card";
 
-        const p2 = document.createElement("p");
-        p2.innerHTML = "<strong>They offered:</strong> ";
-        p2.appendChild(document.createTextNode(req.offeredBookId.title));
+      const p1 = document.createElement("p");
+      p1.innerHTML = "<strong>Requested from you:</strong> ";
+      p1.appendChild(document.createTextNode(req.requestedBookId.title));
 
-        const p3 = document.createElement("p");
-        p3.innerHTML = `<strong>Status:</strong> ${req.status}`;
+      const p2 = document.createElement("p");
+      p2.innerHTML = "<strong>They offered:</strong> ";
+      p2.appendChild(document.createTextNode(req.offeredBookId.title));
 
-        li.append(p1, p2, p3);
+      const p3 = document.createElement("p");
+      p3.innerHTML = `<strong>Status:</strong> ${req.status}`;
 
-        if (req.status === "pending") {
-          const acceptBtn = document.createElement("button");
-          acceptBtn.className = "accept-btn";
-          acceptBtn.dataset.id = req._id;
-          acceptBtn.textContent = "Accept";
-          
-          const rejectBtn = document.createElement("button");
-          rejectBtn.className = "reject-btn";
-          rejectBtn.dataset.id = req._id;
-          rejectBtn.textContent = "Reject";
+      li.append(p1, p2, p3);
 
-          li.append(acceptBtn, rejectBtn);
-        }
+      if (req.status === "pending") {
+        const acceptBtn = document.createElement("button");
+        acceptBtn.className = "accept-btn";
+        acceptBtn.dataset.id = req._id;
+        acceptBtn.textContent = "Accept";
 
-        receivedList.appendChild(li);
-      });
-    }
+        const rejectBtn = document.createElement("button");
+        rejectBtn.className = "reject-btn";
+        rejectBtn.dataset.id = req._id;
+        rejectBtn.textContent = "Reject";
+
+        li.append(acceptBtn, rejectBtn);
+      }
+
+      receivedList.appendChild(li);
+    });
 
     attachSwapButtons();
 
@@ -206,13 +204,12 @@ async function loadSwapRequests() {
 }
 
 /* -------------------------------------------
-   BUTTON HANDLERS
+   SWAP BUTTON HANDLERS
 -------------------------------------------- */
 function attachSwapButtons() {
   document.querySelectorAll(".accept-btn").forEach(btn => {
     btn.addEventListener("click", async () => {
-      const id = btn.dataset.id;
-      await fetch(`/swap/accept/${id}`, {
+      await fetch(`/swap/accept/${btn.dataset.id}`, {
         method: "POST",
         headers: { Authorization: `Bearer ${token}` }
       });
@@ -222,8 +219,7 @@ function attachSwapButtons() {
 
   document.querySelectorAll(".reject-btn").forEach(btn => {
     btn.addEventListener("click", async () => {
-      const id = btn.dataset.id;
-      await fetch(`/swap/reject/${id}`, {
+      await fetch(`/swap/reject/${btn.dataset.id}`, {
         method: "POST",
         headers: { Authorization: `Bearer ${token}` }
       });
@@ -233,8 +229,7 @@ function attachSwapButtons() {
 
   document.querySelectorAll(".cancel-btn").forEach(btn => {
     btn.addEventListener("click", async () => {
-      const id = btn.dataset.id;
-      await fetch(`/swap/cancel/${id}`, {
+      await fetch(`/swap/cancel/${btn.dataset.id}`, {
         method: "POST",
         headers: { Authorization: `Bearer ${token}` }
       });
@@ -244,16 +239,119 @@ function attachSwapButtons() {
 }
 
 /* -------------------------------------------
-   MY BOOKS (Owned) - FETCH, ADD, & DELETE (Secured against XSS)
+   BORROW A BOOK — SHOW LIST
+-------------------------------------------- */
+document.getElementById("loadBorrowBooksBtn").addEventListener("click", () => {
+  document.getElementById("borrow-section").classList.add("active");
+  loadBorrowableBooks();
+});
+
+async function loadBorrowableBooks() {
+  const container = document.getElementById("borrow-books-container");
+  container.innerHTML = "Loading...";
+
+  const res = await fetch(`/api/books`, {
+    headers: { Authorization: `Bearer ${token}` }
+  });
+
+  const books = await res.json();
+  const available = books.filter(b => b.available && !b.borrowedBy);
+
+  container.innerHTML = "";
+
+  available.forEach(book => {
+    const div = document.createElement("div");
+    div.className = "book-card";
+    div.innerHTML = `
+      <h3>${book.title}</h3>
+      <p>${book.author}</p>
+      <button class="borrow-btn" data-id="${book._id}">Borrow</button>
+    `;
+    container.appendChild(div);
+  });
+
+  attachBorrowButtons();
+}
+
+function attachBorrowButtons() {
+  document.querySelectorAll(".borrow-btn").forEach(btn => {
+    btn.addEventListener("click", async () => {
+      const res = await fetch(`/api/books/borrow/${btn.dataset.id}`, {
+        method: "POST",
+        headers: { Authorization: `Bearer ${token}` }
+      });
+
+      const result = await res.json();
+      alert(result.message);
+
+      loadBorrowedBooks();
+    });
+  });
+}
+
+/* -------------------------------------------
+   RESERVE A BOOK — SHOW LIST
+-------------------------------------------- */
+document.getElementById("loadReservationBooksBtn").addEventListener("click", () => {
+  document.getElementById("reserve-section").classList.add("active");
+  loadReservableBooks();
+});
+
+async function loadReservableBooks() {
+  const container = document.getElementById("reserve-books-container");
+  container.innerHTML = "Loading...";
+
+  const res = await fetch(`/api/books`, {
+    headers: { Authorization: `Bearer ${token}` }
+  });
+
+  const books = await res.json();
+  const reservable = books.filter(b => !b.borrowedBy && !b.reservedBy);
+
+  container.innerHTML = "";
+
+  reservable.forEach(book => {
+    const div = document.createElement("div");
+    div.className = "book-card";
+    div.innerHTML = `
+      <h3>${book.title}</h3>
+      <p>${book.author}</p>
+      <button class="reserve-btn" data-id="${book._id}">Reserve</button>
+    `;
+    container.appendChild(div);
+  });
+
+  attachReserveButtons();
+}
+
+function attachReserveButtons() {
+  document.querySelectorAll(".reserve-btn").forEach(btn => {
+    btn.addEventListener("click", async () => {
+      const res = await fetch(`/api/books/reserve/${btn.dataset.id}`, {
+        method: "POST",
+        headers: { Authorization: `Bearer ${token}` }
+      });
+
+      const result = await res.json();
+      alert(result.message);
+
+      loadReservations();
+    });
+  });
+}
+
+/* -------------------------------------------
+   MY BOOKS (Owned)
 -------------------------------------------- */
 async function loadMyBooks() {
   const list = document.getElementById("my-books-list");
-  if (!list) return; 
+  if (!list) return;
 
   try {
     const res = await fetch(`/dashboard/my-books/${userId}`, {
       headers: { Authorization: `Bearer ${token}` }
     });
+
     const result = await res.json();
 
     if (!result.success || result.data.length === 0) {
@@ -263,73 +361,63 @@ async function loadMyBooks() {
 
     list.innerHTML = "";
     result.data.forEach(book => {
-      // Create list item
       const li = document.createElement("li");
       li.style.cssText = "margin-bottom: 10px; display: flex; justify-content: space-between; align-items: center; max-width: 400px;";
 
-      // Create text container
       const span = document.createElement("span");
       const strong = document.createElement("strong");
-      
-      // Inject user data safely with textContent
-      strong.textContent = book.title; 
+      strong.textContent = book.title;
       span.appendChild(strong);
       span.appendChild(document.createTextNode(` by ${book.author}`));
 
-      // Create Delete button
       const deleteBtn = document.createElement("button");
       deleteBtn.className = "delete-btn";
       deleteBtn.textContent = "Delete";
       deleteBtn.style.cssText = "background: red; color: white; border: none; padding: 5px 10px; cursor: pointer; border-radius: 4px;";
-      
-      // Attach click event securely without relying on an inline HTML string
       deleteBtn.addEventListener("click", () => deleteMyBook(book._id));
 
-      // Append elements
       li.appendChild(span);
       li.appendChild(deleteBtn);
       list.appendChild(li);
     });
+
   } catch (err) {
-    console.error(err);
     list.innerHTML = "<li>Error loading your books.</li>";
   }
 }
 
-// Handle Add Book Form Submission with Client-Side Validation
+/* -------------------------------------------
+   ADD BOOK FORM
+-------------------------------------------- */
 const addBookForm = document.getElementById("dashboardAddBookForm");
 if (addBookForm) {
   addBookForm.addEventListener("submit", async (e) => {
     e.preventDefault();
-    
+
     const msg = document.getElementById("addBookMessage");
-    
-    // 1. Get values and immediately trim whitespace from the edges
+
     const title = document.getElementById("newBookTitle").value.trim();
     const author = document.getElementById("newBookAuthor").value.trim();
     const genre = document.getElementById("newBookGenre").value.trim();
-    
-    // 2. Check if they are empty AFTER trimming (prevents spacebar bypassing)
+
     if (!title || !author) {
       msg.style.color = "red";
       msg.textContent = "Title and Author cannot be empty or just spaces.";
-      return; 
+      return;
     }
 
-    // 3. Disable button to prevent double-clicks/spam submissions
     const submitBtn = addBookForm.querySelector('button[type="submit"]');
     submitBtn.disabled = true;
     submitBtn.textContent = "Adding...";
-    msg.textContent = ""; 
+    msg.textContent = "";
 
     try {
       const res = await fetch(`/dashboard/my-books/${userId}`, {
         method: "POST",
-        headers: { 
+        headers: {
           "Content-Type": "application/json",
-          Authorization: `Bearer ${token}` 
+          Authorization: `Bearer ${token}`
         },
-        // Send the safely trimmed values
         body: JSON.stringify({ title, author, genre })
       });
 
@@ -339,26 +427,26 @@ if (addBookForm) {
         msg.style.color = "green";
         msg.textContent = "Book added successfully!";
         addBookForm.reset();
-        loadMyBooks(); // Instantly refresh the list
+        loadMyBooks();
       } else {
         msg.style.color = "red";
         msg.textContent = result.message || "Failed to add book.";
       }
+
     } catch (err) {
-      console.error(err);
       msg.style.color = "red";
       msg.textContent = "Server error.";
     } finally {
-      // 4. Re-enable the button regardless of success or failure
       submitBtn.disabled = false;
       submitBtn.textContent = "Add Book";
     }
   });
 }
 
-// Handle Deleting a Book with Safety Checks
+/* -------------------------------------------
+   DELETE BOOK
+-------------------------------------------- */
 async function deleteMyBook(bookId) {
-  // 1. Client-side confirmation
   if (!confirm("Are you sure you want to permanently delete this book?")) return;
 
   try {
@@ -366,16 +454,16 @@ async function deleteMyBook(bookId) {
       method: "DELETE",
       headers: { Authorization: `Bearer ${token}` }
     });
+
     const result = await res.json();
 
     if (result.success) {
-      loadMyBooks(); // Instantly refresh the list to reflect deletion
+      loadMyBooks();
     } else {
-      // If the backend blocked it (e.g., currently borrowed), show the backend error message
       alert(result.message || "Failed to delete book.");
     }
+
   } catch (err) {
-    console.error(err);
     alert("Error deleting book.");
   }
 }

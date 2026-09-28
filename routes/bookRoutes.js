@@ -8,6 +8,9 @@ const {
     deleteBook
 } = require('../controllers/bookController');
 
+const { borrowBook } = require('../controllers/borrowController');
+const { reserveBook } = require('../controllers/reserveController');
+
 const authMiddleware = require('../middleware/authMiddleware');
 const staffOnly = require('../middleware/staffOnly');
 
@@ -36,6 +39,24 @@ router.delete(
     authMiddleware,
     staffOnly,
     deleteBook
+);
+
+/* -------------------------------------------
+   ⭐ STUDENT ACTIONS (Borrow + Reserve)
+-------------------------------------------- */
+
+// Borrow a book
+router.post(
+    '/borrow/:bookId',
+    authMiddleware,
+    borrowBook
+);
+
+// Reserve a book
+router.post(
+    '/reserve/:bookId',
+    authMiddleware,
+    reserveBook
 );
 
 module.exports = router;
