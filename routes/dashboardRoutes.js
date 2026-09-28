@@ -1,5 +1,6 @@
 const express = require("express");
 const Book = require("../models/Book.js");
+const SwapRequest = require("../models/SwapRequest.js");
 const authMiddleware = require("../middleware/authMiddleware.js");
 const { circulationView } = require('../controllers/borrowController');
 
@@ -21,7 +22,38 @@ router.get("/my-books/:userId", authMiddleware, async (req, res) => {
     }
 
     const books = await Book.find({ ownerId: userId });
-    return res.status(200).json({ success: true, data: books });
+
+    // Enrich each book object with original uploader status
+    const enrichedBooks = await Promise.all(
+      books.map(async (book) => {
+        const bookObj = book.toObject();
+
+        // Check the earliest accepted swap for this book
+        const firstSwap = await SwapRequest.findOne({
+          status: "accepted",
+          $or: [
+            { requestedBookId: book._id },
+            { offeredBookId: book._id }
+          ]
+        }).sort({ createdAt: 1 });
+
+        if (firstSwap) {
+          const originalUploaderId =
+            firstSwap.requestedBookId.toString() === book._id.toString()
+              ? firstSwap.ownerId.toString()
+              : firstSwap.requesterId.toString();
+
+          bookObj.isOriginalUploader = originalUploaderId === tokenUserId;
+        } else {
+          // If never swapped, the current owner is the original uploader
+          bookObj.isOriginalUploader = true;
+        }
+
+        return bookObj;
+      })
+    );
+
+    return res.status(200).json({ success: true, data: enrichedBooks });
   } catch (error) {
     console.error("Dashboard my-books error:", error);
     return res.status(500).json({ success: false, message: "Server error" });
@@ -155,6 +187,37 @@ router.delete("/my-books/:userId/:bookId", authMiddleware, async (req, res) => {
         success: false, 
         message: "Cannot delete this book because it is currently borrowed or reserved." 
       });
+    }
+
+    //  find the VERY FIRST time this book was ever swapped
+    const firstSwap = await SwapRequest.findOne({
+      status: "accepted",
+      $or: [
+        { requestedBookId: bookId },
+        { offeredBookId: bookId }
+      ]
+    }).sort({ createdAt: 1 }); // 1 means ascending (oldest first)
+
+    // if the book has a swap history, verify the user is the original giver
+    if (firstSwap) {
+      let originalUploaderId;
+      
+      // if the book was the requested one, the owner at that time was the original uploader
+      if (firstSwap.requestedBookId.toString() === bookId) {
+        originalUploaderId = firstSwap.ownerId.toString();
+      } 
+      // if the book was the offered one, the requester was the original uploader
+      else {
+        originalUploaderId = firstSwap.requesterId.toString();
+      }
+
+      // if the current user isn't the one who initiated its very first swap, they acquired it later
+      if (originalUploaderId !== tokenUserId) {
+        return res.status(403).json({
+          success: false,
+          message: "You cannot delete a book you acquired through a swap. Only the original uploader can delete it."
+        });
+      }
     }
 
     await Book.findByIdAndDelete(bookId);

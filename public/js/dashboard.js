@@ -18,11 +18,13 @@ loadCirculation();
 loadSwapRequests();
 
 /* -------------------------------------------
-   LOGOUT BUTTON
+   LOGOUT BUTTONS
 -------------------------------------------- */
-document.getElementById("logoutBtn").addEventListener("click", () => {
-  localStorage.clear();
-  window.location.href = "login.html";
+document.querySelectorAll("#logoutBtn, .logout-button, [data-logout]").forEach(btn => {
+  btn.addEventListener("click", () => {
+    localStorage.clear();
+    window.location.href = "login.html";
+  });
 });
 
 /* -------------------------------------------
@@ -194,87 +196,101 @@ async function loadSwapRequests() {
     const result = await res.json();
 
     if (!result.success) {
-      sentList.innerHTML = "<li>Error loading swap requests.</li>";
-      receivedList.innerHTML = "<li>Error loading swap requests.</li>";
+      sentList.innerHTML = "<p class='empty-swap-msg'>Error loading swap requests.</p>";
+      receivedList.innerHTML = "<p class='empty-swap-msg'>Error loading swap requests.</p>";
       return;
     }
 
     const { sent, received } = result.data;
 
     /* ----- SENT REQUESTS ----- */
-    sentList.innerHTML = sent.length === 0 ? "<li>No sent swap requests.</li>" : "";
-
+    sentList.innerHTML = sent.length === 0 ? "<p class='empty-swap-msg'>No sent swap requests.</p>" : "";
     sent.forEach(req => {
-      const li = document.createElement("li");
-      li.className = "swap-card";
-
-      const p1 = document.createElement("p");
-      p1.innerHTML = "<strong>You requested:</strong> ";
-      p1.appendChild(document.createTextNode(req.requestedBookId.title));
-
-      const p2 = document.createElement("p");
-      p2.innerHTML = "<strong>You offered:</strong> ";
-      p2.appendChild(document.createTextNode(req.offeredBookId.title));
-
-      const p3 = document.createElement("p");
-      p3.innerHTML = `<strong>Status:</strong> ${req.status}`;
-
-      li.append(p1, p2, p3);
-
-      if (req.status === "pending") {
-        const btn = document.createElement("button");
-        btn.className = "cancel-btn";
-        btn.dataset.id = req._id;
-        btn.textContent = "Cancel";
-        li.appendChild(btn);
-      }
-
-      sentList.appendChild(li);
+      sentList.appendChild(createSwapCard(req, true));
     });
 
     /* ----- RECEIVED REQUESTS ----- */
-    receivedList.innerHTML = received.length === 0 ? "<li>No received swap requests.</li>" : "";
-
+    receivedList.innerHTML = received.length === 0 ? "<p class='empty-swap-msg'>No received swap requests.</p>" : "";
     received.forEach(req => {
-      const li = document.createElement("li");
-      li.className = "swap-card";
-
-      const p1 = document.createElement("p");
-      p1.innerHTML = "<strong>Requested from you:</strong> ";
-      p1.appendChild(document.createTextNode(req.requestedBookId.title));
-
-      const p2 = document.createElement("p");
-      p2.innerHTML = "<strong>They offered:</strong> ";
-      p2.appendChild(document.createTextNode(req.offeredBookId.title));
-
-      const p3 = document.createElement("p");
-      p3.innerHTML = `<strong>Status:</strong> ${req.status}`;
-
-      li.append(p1, p2, p3);
-
-      if (req.status === "pending") {
-        const acceptBtn = document.createElement("button");
-        acceptBtn.className = "accept-btn";
-        acceptBtn.dataset.id = req._id;
-        acceptBtn.textContent = "Accept";
-
-        const rejectBtn = document.createElement("button");
-        rejectBtn.className = "reject-btn";
-        rejectBtn.dataset.id = req._id;
-        rejectBtn.textContent = "Reject";
-
-        li.append(acceptBtn, rejectBtn);
-      }
-
-      receivedList.appendChild(li);
+      receivedList.appendChild(createSwapCard(req, false));
     });
 
     attachSwapButtons();
 
   } catch (err) {
-    sentList.innerHTML = "<li>Error loading swap requests.</li>";
-    receivedList.innerHTML = "<li>Error loading swap requests.</li>";
+    sentList.innerHTML = "<p class='empty-swap-msg'>Error loading swap requests.</p>";
+    receivedList.innerHTML = "<p class='empty-swap-msg'>Error loading swap requests.</p>";
   }
+}
+
+/* Helper function to generate a swap card element */
+function createSwapCard(req, isSent) {
+  const li = document.createElement("li");
+  li.className = "swap-card";
+
+  const reqLabel = isSent ? "You requested:" : "Requested from you:";
+  const offLabel = isSent ? "You offered:" : "They offered:";
+
+  const requestedTitle = req.requestedBookId?.title || "Unknown Book";
+  const offeredTitle = req.offeredBookId?.title || "Unknown Book";
+
+  // Book Requested Line
+  const p1 = document.createElement("p");
+  const strong1 = document.createElement("strong");
+  strong1.textContent = `${reqLabel} `;
+  p1.appendChild(strong1);
+  p1.appendChild(document.createTextNode(requestedTitle));
+
+  // Book Offered Line
+  const p2 = document.createElement("p");
+  const strong2 = document.createElement("strong");
+  strong2.textContent = `${offLabel} `;
+  p2.appendChild(strong2);
+  p2.appendChild(document.createTextNode(offeredTitle));
+
+  // Status Line
+  const p3 = document.createElement("p");
+  const strong3 = document.createElement("strong");
+  strong3.textContent = "Status: ";
+  
+  const statusBadge = document.createElement("span");
+  statusBadge.className = `swap-status-badge status-${(req.status || "pending").toLowerCase()}`;
+  statusBadge.textContent = req.status;
+
+  p3.appendChild(strong3);
+  p3.appendChild(statusBadge);
+
+  li.append(p1, p2, p3);
+
+  // Buttons for Pending Status
+  if (req.status === "pending") {
+    const actions = document.createElement("div");
+    actions.className = "swap-actions";
+
+    if (isSent) {
+      const cancelBtn = document.createElement("button");
+      cancelBtn.className = "cancel-btn";
+      cancelBtn.dataset.id = req._id;
+      cancelBtn.textContent = "Cancel Request";
+      actions.appendChild(cancelBtn);
+    } else {
+      const acceptBtn = document.createElement("button");
+      acceptBtn.className = "accept-btn";
+      acceptBtn.dataset.id = req._id;
+      acceptBtn.textContent = "Accept";
+
+      const rejectBtn = document.createElement("button");
+      rejectBtn.className = "reject-btn";
+      rejectBtn.dataset.id = req._id;
+      rejectBtn.textContent = "Reject";
+
+      actions.append(acceptBtn, rejectBtn);
+    }
+
+    li.appendChild(actions);
+  }
+
+  return li;
 }
 
 /* -------------------------------------------
@@ -283,31 +299,65 @@ async function loadSwapRequests() {
 function attachSwapButtons() {
   document.querySelectorAll(".accept-btn").forEach(btn => {
     btn.addEventListener("click", async () => {
-      await fetch(`/swap/accept/${btn.dataset.id}`, {
-        method: "POST",
-        headers: { Authorization: `Bearer ${token}` }
-      });
-      loadSwapRequests();
+      try {
+        const res = await fetch(`/swap/accept/${btn.dataset.id}`, {
+          method: "POST",
+          headers: { Authorization: `Bearer ${token}` }
+        });
+        const result = await res.json();
+
+        if (!result.success) {
+          alert(result.message || "Failed to accept swap request.");
+        }
+      } catch (err) {
+        console.error("Error accepting swap:", err);
+        alert("Error accepting swap request.");
+      } finally {
+        // Refresh both swap requests and personal books
+        await Promise.all([loadSwapRequests(), loadMyBooks()]);
+      }
     });
   });
 
   document.querySelectorAll(".reject-btn").forEach(btn => {
     btn.addEventListener("click", async () => {
-      await fetch(`/swap/reject/${btn.dataset.id}`, {
-        method: "POST",
-        headers: { Authorization: `Bearer ${token}` }
-      });
-      loadSwapRequests();
+      try {
+        const res = await fetch(`/swap/reject/${btn.dataset.id}`, {
+          method: "POST",
+          headers: { Authorization: `Bearer ${token}` }
+        });
+        const result = await res.json();
+
+        if (!result.success) {
+          alert(result.message || "Failed to reject swap request.");
+        }
+      } catch (err) {
+        console.error("Error rejecting swap:", err);
+        alert("Error rejecting swap request.");
+      } finally {
+        await Promise.all([loadSwapRequests(), loadMyBooks()]);
+      }
     });
   });
 
   document.querySelectorAll(".cancel-btn").forEach(btn => {
     btn.addEventListener("click", async () => {
-      await fetch(`/swap/cancel/${btn.dataset.id}`, {
-        method: "POST",
-        headers: { Authorization: `Bearer ${token}` }
-      });
-      loadSwapRequests();
+      try {
+        const res = await fetch(`/swap/cancel/${btn.dataset.id}`, {
+          method: "POST",
+          headers: { Authorization: `Bearer ${token}` }
+        });
+        const result = await res.json();
+
+        if (!result.success) {
+          alert(result.message || "Failed to cancel swap request.");
+        }
+      } catch (err) {
+        console.error("Error canceling swap:", err);
+        alert("Error canceling swap request.");
+      } finally {
+        await Promise.all([loadSwapRequests(), loadMyBooks()]);
+      }
     });
   });
 }
@@ -337,7 +387,7 @@ if (typeof io === 'function') {
 }
 
 /* -------------------------------------------
-   MY BOOKS (Owned)
+   LOAD MY BOOKS (Owned)
 -------------------------------------------- */
 async function loadMyBooks() {
   const list = document.getElementById("my-books-list");
@@ -350,7 +400,7 @@ async function loadMyBooks() {
 
     const result = await res.json();
 
-    if (!result.success || result.data.length === 0) {
+    if (!result.success || !result.data || result.data.length === 0) {
       list.innerHTML = "<li>You haven't added any personal books yet.</li>";
       return;
     }
@@ -358,26 +408,63 @@ async function loadMyBooks() {
     list.innerHTML = "";
     result.data.forEach(book => {
       const li = document.createElement("li");
-      li.style.cssText = "margin-bottom: 10px; display: flex; justify-content: space-between; align-items: center; max-width: 400px;";
 
-      const span = document.createElement("span");
+      // Left Container: Title + Author + Badge
+      const infoSpan = document.createElement("span");
+
       const strong = document.createElement("strong");
       strong.textContent = book.title;
-      span.appendChild(strong);
-      span.appendChild(document.createTextNode(` by ${book.author}`));
+      infoSpan.appendChild(strong);
+      infoSpan.appendChild(document.createTextNode(` by ${book.author} `));
 
+      // Determine ownership & availability flags
+      const isUnavailable = Boolean(book.borrowedBy) || Boolean(book.reservedBy) || !book.available;
+      const isOriginalOwner = book.isOriginalUploader !== false;
+      const isDeletable = !isUnavailable && isOriginalOwner;
+
+      // Status Badge
+      const statusBadge = document.createElement("span");
+      statusBadge.className = "status-badge";
+
+      if (isUnavailable) {
+        statusBadge.classList.add("badge-not-available");
+        statusBadge.textContent = "Not Available";
+      } else if (!isOriginalOwner) {
+        statusBadge.classList.add("badge-swapped");
+        statusBadge.textContent = "Not Original Owner";
+      } else {
+        statusBadge.classList.add("badge-available");
+        statusBadge.textContent = "Available";
+      }
+      infoSpan.appendChild(statusBadge);
+
+      // Right Container: Delete Button
       const deleteBtn = document.createElement("button");
       deleteBtn.className = "delete-btn";
       deleteBtn.textContent = "Delete";
-      deleteBtn.style.cssText = "background: red; color: white; border: none; padding: 5px 10px; cursor: pointer; border-radius: 4px;";
-      deleteBtn.addEventListener("click", () => deleteMyBook(book._id));
 
-      li.appendChild(span);
+      if (!isDeletable) {
+        deleteBtn.disabled = true;
+        deleteBtn.classList.add("disabled-btn");
+
+        if (isUnavailable) {
+          deleteBtn.title = "Cannot delete a book that is currently borrowed or reserved.";
+        } else if (!isOriginalOwner) {
+          deleteBtn.title = "You cannot delete a book acquired through a swap. Only the original uploader can delete it.";
+        }
+      } else {
+        deleteBtn.title = "Delete this personal book";
+        deleteBtn.addEventListener("click", () => deleteMyBook(book._id));
+      }
+
+      // Append left side and right side to <li>
+      li.appendChild(infoSpan);
       li.appendChild(deleteBtn);
       list.appendChild(li);
     });
 
   } catch (err) {
+    console.error("Error loading personal books:", err);
     list.innerHTML = "<li>Error loading your books.</li>";
   }
 }

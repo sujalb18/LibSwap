@@ -333,6 +333,194 @@ The public GET catalogue remains accessible without authentication.
 
 ---
 
+### US05 - Adding a Personal Book to the Database
+
+US05 allows authenticated users to add personal books to their personal collection for tracking and peer-to-peer swapping.
+
+Implemented functionality includes:
+
+- Add personal books to user collection
+- Validate required title and author fields
+- Reject empty or whitespace-only inputs
+- Enforce maximum character length constraints
+- Prevent duplicate book entries for the same user
+- Automatically assign ownerId from JWT authentication
+- Backend validation error handling with clear response messages
+- Integration with the Express/Mongoose dashboard API
+- Real-time frontend UI update upon successful addition
+- JWT authentication and owner authorization
+- Automated API testing
+
+http://localhost:3000/dashboard.html
+
+Book Addition Flow
+
+```text
+Browser
+    ↓
+dashboard.js
+    ↓
+POST /dashboard/my-books/:userId
+    ↓
+dashboardRoutes.js
+    ↓
+dashboardController.js
+    ↓
+Book Mongoose model
+    ↓
+MongoDB
+    ↓
+JSON response
+    ↓
+Personal book list update
+```
+
+Validation Rules
+
+Example payload:
+
+```JSON
+{
+  "title": "The Hobbit",
+  "author": "J.R.R. Tolkien",
+  "genre": "Fantasy"
+}
+```
+
+The backend enforces:
+
+- title: String required, maximum 100 characters, no whitespace-only inputs
+- author: String required, maximum 50 characters, no whitespace-only inputs
+- genre: Optional string, maximum 30 characters
+- Duplicate check: Rejects adding a book with identical title and author under the same ownerId
+
+---
+
+### US07 - Accepting or Rejecting a Swap Request
+
+US07 provides interface and backend logic for book owners to accept or reject incoming swap requests with dynamic ownership transfer and UI state synchronization.
+
+Implemented functionality includes:
+
+- Fetch sent and received swap requests
+- Display request status badges (pending, accepted, rejected, cancelled)
+- Accept pending incoming swap requests
+- Reject pending incoming swap requests
+- Automatically transfer book ownership (ownerId) upon acceptance
+- Restrict swap action permissions strictly to the requested book owner
+- Automatically reject competing pending swaps involving the same books upon acceptance
+- Prevent processing of requests that are no longer pending
+- Block swapping books that are currently borrowed, reserved, or in another active swap
+- Synchronize frontend swap status and personal inventory using concurrent API calls
+- JWT authentication and user authorization
+- Automated API testing
+
+Swap Interface
+
+```text
+http://localhost:3000/dashboard.html
+```
+
+Swap Acceptance Flow
+
+```text
+Browser
+    ↓
+dashboard.js
+    ↓
+POST /swap/accept/:id
+    ↓
+swapRoutes.js
+    ↓
+swapController.js
+    ↓
+SwapRequest & Book Mongoose models
+    ↓
+MongoDB (Ownership update & status change)
+    ↓
+JSON response
+    ↓
+Promise.all UI refresh (Swap Requests + My Books)
+```
+
+Action Logic
+
+Example request:
+
+```text
+POST /swap/accept/65f1a2b3c4d5e6f7a8b9c0d1
+```
+
+The backend verifies:
+
+- Authenticated user is the target book owner (ownerId)
+- Swap status is currently pending
+- Offered and requested books are available and not currently borrowed/reserved
+- Upon acceptance, updates book ownership (ownerId) for both books and auto-rejects all other pending swap requests for those books
+
+---
+
+US13 - Deleting a Personal Book from the Database
+
+US13 allows users to remove books from their personal collection while maintaining data integrity, active borrowing checks, and original uploader rights.
+
+Implemented functionality includes:
+
+- Delete owned personal books from the user inventory
+- Validate JWT user identity against requested route parameters
+- Block deletion of books currently borrowed or reserved
+- Track original book uploaders across accepted swap transactions
+- Restrict deletion rights for swapped books exclusively to the original uploader
+- Return 403 Forbidden when non-original uploaders attempt to delete acquired swapped books
+- Prevent unauthorized cross-user deletion attempts
+- Handle missing or invalid book ObjectIDs
+- Dynamic frontend item removal upon successful deletion
+- Automated API testing
+
+Dashboard Page
+
+```text
+http://localhost:3000/dashboard.html
+```
+
+Book Deletion Flow
+
+```text
+Browser
+    ↓
+dashboard.js
+    ↓
+DELETE /dashboard/my-books/:userId/:bookId
+    ↓
+dashboardRoutes.js
+    ↓
+dashboardController.js
+    ↓
+Book & SwapRequest Mongoose models
+    ↓
+MongoDB
+    ↓
+JSON response
+    ↓
+Personal book list update
+```
+
+Guardrails & Authorization Logic
+
+Example endpoint call:
+
+```text
+DELETE /dashboard/my-books/65f1a2b3c4d5e6f7a8b9c0d1/65f1a2b3c4d5e6f7a8b9c0d2
+```
+
+The backend evaluates:
+
+- Token authorization: Token userId must match parameter :userId
+- Loan check: Rejects deletion if borrowedBy or reservedBy fields are present
+- Original Uploader tracking: Inspects SwapRequest history. If the book was acquired via a swap, deletion is allowed only if the requester is the original uploader who first introduced the book to the platform
+
+---
+
 # Real-Time Catalogue Updates
 
 LibSwap uses Socket.IO to synchronize administrative book changes with catalogue pages that are already open.
@@ -368,7 +556,6 @@ The catalogue does not require a manual refresh to see these changes.
 
 ---
 
->>>>>>> a4d0918f96bd88d4f9c95d141037a2d758276762
 # Student Dashboard
 
 The repository also contains a student dashboard module.
@@ -386,28 +573,20 @@ Current dashboard functionality includes routes for:
 
 Dashboard API routes include:
 
-<<<<<<< HEAD
 ### 4. Navigation
 - A button allows the student to switch to the Swap Request dashboard.
->>>>>>> faf251139ff1c891d0205072dcb0ba84e4e15a61
-=======
+
 ```text
 GET /dashboard/my-books/:userId
 GET /dashboard/swap-received/:userId
 GET /dashboard/swap-sent/:userId
 ```
->>>>>>> a4d0918f96bd88d4f9c95d141037a2d758276762
-
 The dashboard frontend contains sections for:
 
-<<<<<<< HEAD
 ## Purpose
-<<<<<<< HEAD
 This dashboard provides a dedicated section for students to initiate swap requests and supports the overall UI flow of the application.
-=======
 This dashboard supports the user stories for Task 9.2 by demonstrating UI interaction control and simple navigation.
 
->>>>>>> faf251139ff1c891d0205072dcb0ba84e4e15a61
 =======
 - My Books
 - Swap Requests Received
@@ -447,23 +626,8 @@ The routes also populate related book and user information where available.
 
 ---
 
-# Personal Book Interfaces
 
-The repository contains separate frontend interfaces for student/personal book functionality.
 
-Current pages include:
-
-```text
-add-book.html
-delete-personal-book.html
-```
-
-Associated JavaScript files include:
-
-```text
-public/js/add-book.js
-public/js/delete-personal-book.js
-```
 
 These interfaces provide UI flows for:
 
@@ -819,4 +983,3 @@ before opening the final pull request to `main`.
 - Real-time Socket.IO catalogue updates
 - Staff-only API authorization
 - 18 passing automated API tests
->>>>>>> a4d0918f96bd88d4f9c95d141037a2d758276762

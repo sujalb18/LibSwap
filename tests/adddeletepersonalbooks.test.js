@@ -8,6 +8,7 @@ process.env.JWT_SECRET = 'libswap-test-secret';
 
 const app = require('../app');
 const Book = require('../models/Book');
+const SwapRequest = require('../models/SwapRequest');
 
 // Give Jest enough time for the temporary MongoDB server
 jest.setTimeout(120000);
@@ -55,10 +56,11 @@ beforeAll(async () => {
     );
 });
 
-// Remove test books after every test
+// Remove test data after every test
 afterEach(async () => {
     if (databaseReady && mongoose.connection.readyState === 1) {
         await Book.deleteMany({});
+        await SwapRequest.deleteMany({});
     }
 });
 
@@ -112,7 +114,7 @@ describe('Dashboard My Books API automated tests', () => {
     });
 
     test('POST /dashboard/my-books/:userId rejects inputs exceeding maximum length', async () => {
-        const longTitle = 'a'.repeat(101); // max is 100
+        const longTitle = 'a'.repeat(101);
         const response = await request(app)
             .post(`/dashboard/my-books/${studentUserId}`)
             .set('Authorization', `Bearer ${studentToken}`)
@@ -126,14 +128,12 @@ describe('Dashboard My Books API automated tests', () => {
     });
 
     test('POST /dashboard/my-books/:userId rejects exact duplicate books from the same user', async () => {
-        // Create the initial book
         await Book.create({
             title: 'Dune',
             author: 'Frank Herbert',
             ownerId: studentUserId
         });
 
-        // Try to add it again
         const response = await request(app)
             .post(`/dashboard/my-books/${studentUserId}`)
             .set('Authorization', `Bearer ${studentToken}`)
@@ -171,14 +171,12 @@ describe('Dashboard My Books API automated tests', () => {
     });
 
     test('DELETE /dashboard/my-books/:userId/:bookId returns 404 if trying to delete someone else\'s book', async () => {
-        // Create a book owned by the primary student
         const book = await Book.create({
             title: 'Fahrenheit 451',
             author: 'Ray Bradbury',
             ownerId: studentUserId
         });
 
-        // The hacker tries to delete it using the hacker's userId
         const response = await request(app)
             .delete(`/dashboard/my-books/${hackerUserId}/${book._id}`)
             .set('Authorization', `Bearer ${hackerToken}`)
@@ -186,7 +184,6 @@ describe('Dashboard My Books API automated tests', () => {
 
         expect(response.body.message).toMatch(/not found or permission denied/i);
 
-        // Verify the book is still in the database
         const safeBook = await Book.findById(book._id);
         expect(safeBook).not.toBeNull();
     });
@@ -196,7 +193,7 @@ describe('Dashboard My Books API automated tests', () => {
             title: 'Brave New World',
             author: 'Aldous Huxley',
             ownerId: studentUserId,
-            borrowedBy: new mongoose.Types.ObjectId() // Simulates another user actively borrowing it
+            borrowedBy: new mongoose.Types.ObjectId()
         });
 
         const response = await request(app)
@@ -206,31 +203,107 @@ describe('Dashboard My Books API automated tests', () => {
 
         expect(response.body.message).toMatch(/currently borrowed or reserved/i);
 
-        // Verify the book is still in the database
         const blockedBook = await Book.findById(book._id);
         expect(blockedBook).not.toBeNull();
     });
 
     test('DELETE /dashboard/my-books/:userId/:bookId blocks hacker using victim URL with hacker token', async () => {
-        // Create a book owned by the primary student
         const book = await Book.create({
             title: 'Catch-22',
             author: 'Joseph Heller',
             ownerId: studentUserId
         });
 
-        // The hacker tries to spoof the URL using the victim's studentUserId, 
-        // but their Authorization header contains the hackerToken.
         const response = await request(app)
             .delete(`/dashboard/my-books/${studentUserId}/${book._id}`)
             .set('Authorization', `Bearer ${hackerToken}`)
-            .expect(403); // Our new logic should catch this and return a 403 Forbidden
+            .expect(403);
 
         expect(response.body.success).toBe(false);
         expect(response.body.message).toMatch(/unauthorized/i);
 
-        // Verify the book is still safely in the database
         const safeBook = await Book.findById(book._id);
         expect(safeBook).not.toBeNull();
+    });
+
+    test('DELETE /dashboard/my-books/:userId/:bookId prevents deleting a book acquired through a swap', async () => {
+        const hackerBook = await Book.create({
+            title: 'Hacker Book',
+            author: 'Author A',
+            ownerId: studentUserId, // Student holds it now after swap
+            available: true
+        });
+
+        const studentBook = await Book.create({
+            title: 'Student Book',
+            author: 'Author B',
+            ownerId: hackerUserId, // Hacker holds it now after swap
+            available: true
+        });
+
+        // Valid SwapRequest record where Hacker was original owner of hackerBook
+        await SwapRequest.create({
+            requestedBookId: hackerBook._id,
+            offeredBookId: studentBook._id,
+            ownerId: hackerUserId, // Original owner of requested book
+            requesterId: studentUserId, // Offerer of studentBook
+            status: 'accepted',
+            createdAt: new Date('2026-01-01')
+        });
+
+        const response = await request(app)
+            .delete(`/dashboard/my-books/${studentUserId}/${hackerBook._id}`)
+            .set('Authorization', `Bearer ${studentToken}`)
+            .expect(403);
+
+        expect(response.body.success).toBe(false);
+        expect(response.body.message).toMatch(/cannot delete a book you acquired through a swap/i);
+
+        const exists = await Book.findById(hackerBook._id);
+        expect(exists).not.toBeNull();
+    });
+
+    test('DELETE /dashboard/my-books/:userId/:bookId allows original uploader to delete book if swapped back', async () => {
+        const studentBook = await Book.create({
+            title: 'Student Book',
+            author: 'Author B',
+            ownerId: studentUserId, // Returned back to student
+            available: true
+        });
+
+        const hackerBook = await Book.create({
+            title: 'Hacker Book',
+            author: 'Author A',
+            ownerId: hackerUserId,
+            available: true
+        });
+
+        // Swap 1: Student offered studentBook to Hacker
+        await SwapRequest.create({
+            requestedBookId: hackerBook._id,
+            offeredBookId: studentBook._id,
+            ownerId: hackerUserId,
+            requesterId: studentUserId, // Original uploader of offeredBook (studentBook)
+            status: 'accepted',
+            createdAt: new Date('2026-01-01')
+        });
+
+        // Swap 2: Traded back
+        await SwapRequest.create({
+            requestedBookId: studentBook._id,
+            offeredBookId: hackerBook._id,
+            ownerId: hackerUserId,
+            requesterId: studentUserId,
+            status: 'accepted',
+            createdAt: new Date('2026-02-01')
+        });
+
+        const response = await request(app)
+            .delete(`/dashboard/my-books/${studentUserId}/${studentBook._id}`)
+            .set('Authorization', `Bearer ${studentToken}`)
+            .expect(200);
+
+        expect(response.body.success).toBe(true);
+        expect(response.body.message).toBe('Book deleted successfully.');
     });
 });
