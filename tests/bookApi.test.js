@@ -83,6 +83,57 @@ afterAll(async () => {
     }
 });
 
+describe('Circulation history and reservations', () => {
+    async function student(name) {
+        const user = await User.create({ username: name, fullName: name, email: `${name}@example.test`, passwordHash: 'test-only' });
+        return { id: String(user._id), token: jwt.sign({ userId: String(user._id), role: 'student' }, process.env.JWT_SECRET) };
+    }
+    const act = (book, action, user) => request(app).post(`/api/books/${action}/${book._id}`)
+        .set('Authorization', `Bearer ${user.token}`);
+    const state = user => request(app).get('/api/books/circulation').set('Authorization', `Bearer ${user.token}`);
+
+    test('records due dates and private history, honours the queue and notifies only its head', async () => {
+        const [alice, bob, charlie] = await Promise.all(['alice', 'bob', 'charlie'].map(student));
+        const book = await Book.create({ title: 'Queue Book', author: 'Author' });
+        const io = { emit: jest.fn() };
+        app.set('io', io);
+        await act(book, 'reserve', alice).expect(409);
+        const borrowed = await act(book, 'borrow', alice).expect(200);
+        expect(new Date(borrowed.body.data.dueAt) - new Date(borrowed.body.data.borrowedAt)).toBe(14 * 86400000);
+        await act(book, 'reserve', alice).expect(409);
+        await act(book, 'reserve', bob).expect(200);
+        await act(book, 'reserve', bob).expect(409);
+        await act(book, 'reserve', charlie).expect(200);
+        expect((await state(charlie)).body.data[0]).toMatchObject({ reservationPosition: 2, reservationCount: 2, reservationStatus: 'waiting' });
+        expect((await state(bob)).body.history).toEqual([]);
+        const publicBook = (await request(app).get('/api/books')).body[0];
+        expect(publicBook.loanHistory).toBeUndefined();
+        expect(publicBook.reservationQueue).toBeUndefined();
+        await act(book, 'return', bob).expect(409);
+        await act(book, 'return', alice).expect(200);
+        await act(book, 'return', alice).expect(409);
+        expect((await state(alice)).body.history[0]).toMatchObject({ status: 'returned', returnedAt: expect.any(String) });
+        expect((await state(bob)).body.data[0]).toMatchObject({ available: false, canBorrow: true, reservationStatus: 'ready' });
+        const notice = await request(app).get('/api/notifications').set('Authorization', `Bearer ${bob.token}`).expect(200);
+        expect(notice.body.notifications).toHaveLength(1);
+        expect(notice.body.notifications[0].title).toBe('Your reserved book is available');
+        expect(await Notification.countDocuments({ user: charlie.id })).toBe(0);
+        await act(book, 'borrow', charlie).expect(409);
+        await act(book, 'borrow', alice).expect(409);
+        await act(book, 'borrow', bob).expect(200);
+        await act(book, 'return', bob).expect(200);
+        expect(await Notification.countDocuments({ user: charlie.id })).toBe(1);
+        await act(book, 'borrow', charlie).expect(200);
+        await act(book, 'return', charlie).expect(200);
+        expect((await Book.findById(book._id)).available).toBe(true);
+        expect(io.emit).toHaveBeenCalledWith('booksChanged', { action: 'return', bookId: book._id });
+        expect(io.emit.mock.calls.every(([, payload]) => !payload.book && !payload.user)).toBe(true);
+        app.set('io', undefined);
+    });
+
+
+});
+
 describe('Book API automated tests', () => {
 
     test('GET /api/books returns all books', async () => {
