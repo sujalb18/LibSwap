@@ -45,23 +45,24 @@
       <div id="student-details"></div>
     </section>
 
+    <!-- My Books -->
     <section id="my-books" class="section">
       <h2>My Uploaded Books</h2>
       
       <!-- Add Book Form -->
-      <div class="form-container" style="margin-bottom: 30px; border: 1px solid #ddd; padding: 15px;">
+      <div class="form-container">
         <h3>Share a New Book</h3>
         <form id="dashboardAddBookForm">
-          <div style="margin-bottom: 10px;">
+          <div class="form-group">
             <input type="text" id="newBookTitle" placeholder="Book Title (required)" required>
           </div>
-          <div style="margin-bottom: 10px;">
+          <div class="form-group">
             <input type="text" id="newBookAuthor" placeholder="Author (required)" required>
           </div>
-          <div style="margin-bottom: 10px;">
+          <div class="form-group">
             <input type="text" id="newBookGenre" placeholder="Genre (optional)">
           </div>
-          <p id="addBookMessage" style="margin: 5px 0;"></p>
+          <p id="addBookMessage" class="message"></p>
           <button type="submit" class="action-btn">Add Book</button>
         </form>
       </div>
@@ -88,7 +89,6 @@
       <div id="borrow-books-container"></div>
     </section>
 
-
     <!-- Reservations -->
     <section id="reservations" class="section">
       <h2>Your Reservations</h2>
@@ -102,27 +102,24 @@
       <div id="reserve-books-container"></div>
     </section>
 
-
     <!-- Swap Requests -->
     <section id="swap-requests" class="section">
       <h2>Swap Requests</h2>
 
-      <!-- Button to open swap.html -->
       <button class="action-btn" onclick="window.location.href='swap.html'">
         Request a Swap
       </button>
 
       <!-- Sent Requests -->
       <h3>Requests You Sent</h3>
-      <ul id="swap-sent-list" class="swap-list"></ul>
+      <div id="swap-sent-list" class="swap-list"></div>
 
       <!-- Received Requests -->
       <h3>Requests You Received</h3>
-      <ul id="swap-received-list" class="swap-list"></ul>
+      <div id="swap-received-list" class="swap-list"></div>
     </section>
 
-    <button id="logoutBtn" class="logout-btn">Logout</button>
-
+    <button id="logoutBtn" class="logout-button" style="margin-top: 20px;">Logout</button>
 
   </main>
 
@@ -134,7 +131,7 @@
     document.querySelectorAll(".sidebar li").forEach(item => {
       item.addEventListener("click", () => {
         const target = item.getAttribute("data-section");
-        if (!target) return; // If there is no data-section (like the Catalogue link), ignore the tab switch
+        if (!target) return;
 
         document.querySelectorAll(".section")
           .forEach(sec => sec.classList.remove("active"));
