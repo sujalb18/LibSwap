@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
 
@@ -18,6 +19,11 @@
     <header>
         <h1>LibSwap Library Catalogue</h1>
         <p>Browse and search for books available in the library.</p>
+        <nav class="site-nav">
+            <a href="catalogue.html">Catalogue</a>
+            <a href="book-requests.html">Request a Book</a>
+            <a href="notifications.html">Notifications</a>
+        </nav>
     </header>
 
     <main>
@@ -27,11 +33,7 @@
             <label for="searchInput">Search books</label>
 
             <div class="search-box">
-                <input
-                    type="text"
-                    id="searchInput"
-                    placeholder="Search by title, author or genre"
-                >
+                <input type="text" id="searchInput" placeholder="Search by title, author or genre">
 
                 <button id="searchButton">
                     Search
@@ -70,6 +72,12 @@
                     </select>
                 </div>
 
+                <div class="my-reviews-control">
+                    <button type="button" id="myReviewsButton" class="my-reviews-button">
+                        My Reviews
+                    </button>
+                </div>
+
             </div>
         </section>
 
@@ -80,7 +88,142 @@
         <section id="bookList" class="book-list">
         </section>
 
+        <!-- Review Modal -->
+        <div id="reviewModal" class="review-modal hidden">
+
+            <div class="review-modal-content">
+
+                <button type="button" id="closeReviewModal" class="review-close" aria-label="Close review form">
+                    ×
+                </button>
+
+                <div class="review-modal-header">
+                    <span class="review-label">LIBSWAP REVIEW</span>
+
+                    <h2 id="reviewBookTitle">
+                        Write a Review
+                    </h2>
+
+                    <p id="reviewBookAuthor"></p>
+                </div>
+
+                <form id="reviewForm">
+
+                    <div class="review-rating-section">
+
+                        <label>Your Rating</label>
+
+                        <div id="ratingStars" class="rating-stars" role="group"
+                            aria-label="Select a rating from 1 to 5">
+                            <button type="button" class="star-button" data-rating="1">
+                                ★
+                            </button>
+
+                            <button type="button" class="star-button" data-rating="2">
+                                ★
+                            </button>
+
+                            <button type="button" class="star-button" data-rating="3">
+                                ★
+                            </button>
+
+                            <button type="button" class="star-button" data-rating="4">
+                                ★
+                            </button>
+
+                            <button type="button" class="star-button" data-rating="5">
+                                ★
+                            </button>
+                        </div>
+
+                        <p id="ratingText" class="rating-text">
+                            Select a rating
+                        </p>
+
+                    </div>
+
+                    <div class="review-comment-section">
+
+                        <label for="reviewComment">
+                            Your Review
+                        </label>
+
+                        <textarea id="reviewComment" rows="5" maxlength="1000"
+                            placeholder="Share your experience with this book..." required></textarea>
+
+                        <div class="character-count">
+                            <span id="commentCount">0</span>/1000
+                        </div>
+
+                    </div>
+
+                    <p id="reviewMessage" class="review-message" aria-live="polite"></p>
+
+                    <button type="submit" id="submitReviewButton" class="submit-review-button">
+                        Submit Review
+                    </button>
+
+                </form>
+
+            </div>
+
+        </div>
+
     </main>
+
+    <!-- View Reviews Modal -->
+    <div id="viewReviewsModal" class="review-modal hidden">
+
+        <div class="review-modal-content">
+
+            <button type="button" id="closeViewReviewsModal" class="review-close" aria-label="Close reviews">
+                ×
+            </button>
+
+            <div class="review-modal-header">
+                <span class="review-label">LIBSWAP REVIEWS</span>
+
+                <h2 id="viewReviewsBookTitle">
+                    Book Reviews
+                </h2>
+
+                <p id="viewReviewsBookAuthor"></p>
+            </div>
+
+            <div id="reviewsSummary" class="reviews-summary">
+            </div>
+
+            <div id="bookReviewsList" class="book-reviews-list">
+            </div>
+
+        </div>
+
+    </div>
+
+
+    <!-- My Reviews Modal -->
+    <div id="myReviewsModal" class="review-modal hidden">
+
+        <div class="review-modal-content">
+
+            <button type="button" id="closeMyReviewsModal" class="review-close" aria-label="Close my reviews">
+                ×
+            </button>
+
+            <div class="review-modal-header">
+                <span class="review-label">MY LIBSWAP REVIEWS</span>
+
+                <h2>My Reviews</h2>
+
+                <p>Manage reviews you have submitted.</p>
+            </div>
+
+            <div id="myReviewsList" class="my-reviews-list">
+            </div>
+
+        </div>
+
+    </div>
 
     <!-- Socket.IO lets the catalogue receive real-time book updates -->
     <script src="/socket.io/socket.io.js"></script>
@@ -89,4 +232,5 @@
     <script src="js/catalogue.js"></script>
 
 </body>
+
 </html>

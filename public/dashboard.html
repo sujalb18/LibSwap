@@ -3,6 +3,7 @@
 
 <head>
   <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>LibSwap Dashboard</title>
   <link rel="stylesheet" href="/css/dashboard.css">
 </head>
@@ -11,8 +12,17 @@
 
   <!-- Header -->
   <header class="header">
-    <div class="logo">LibSwap</div>
-    <div class="tagline">Smart Library Management & Book Swapping System</div>
+    <div class="header-left">
+      <div class="logo">
+        LibSwap
+      </div>
+      <div class="tagline">
+        Smart Library Management & Book Swapping System
+      </div>
+    </div>
+    <button type="button" class="logout-button" data-logout>
+      Logout
+    </button>
   </header>
 
   <!-- Sidebar -->
@@ -23,12 +33,15 @@
       <li data-section="my-books">My Books</li>
       <li data-section="borrowed-books">Borrowed Books</li>
       <li data-section="reservations">Your Reservations</li>
+      <li><a href="notifications.html">Notifications <span id="circulation-unread"></span></a></li>
       <li data-section="swap-requests">Swap Requests</li>
     </ul>
   </nav>
 
   <!-- Main Content -->
   <main class="content">
+    <p id="circulation-message" role="status" aria-live="polite"></p>
+    <p id="reservation-alert" role="status" aria-live="polite"></p>
 
     <!-- Student Info -->
     <section id="student-info" class="section active">
@@ -69,16 +82,35 @@
     <!-- Borrowed Books -->
     <section id="borrowed-books" class="section">
       <h2>Borrowed Books</h2>
+      <p>New loans are due 14 days after borrowing. Return books here when finished.</p>
       <button id="loadBorrowBooksBtn" class="action-btn">Borrow a Book</button>
+      <button id="refreshCirculationBtn" class="action-btn" type="button">Refresh status</button>
       <ul id="borrowed-list"></ul>
+      <h3>Borrowing History</h3>
+      <ul id="borrowing-history"></ul>
     </section>
+
+    <!-- Borrow Section (hidden by default) -->
+    <section id="borrow-section" class="section">
+      <h2>Select a Book to Borrow</h2>
+      <div id="borrow-books-container"></div>
+    </section>
+
 
     <!-- Reservations -->
     <section id="reservations" class="section">
       <h2>Your Reservations</h2>
+      <p>Reservations are first come, first served. Your position and status appear below; an alert is saved in Notifications when your book is ready.</p>
       <button id="loadReservationBooksBtn" class="action-btn">Reserve a Book</button>
       <ul id="reservation-list"></ul>
     </section>
+
+    <!-- Reserve Section (hidden by default) -->
+    <section id="reserve-section" class="section">
+      <h2>Select a Book to Reserve</h2>
+      <div id="reserve-books-container"></div>
+    </section>
+
 
     <!-- Swap Requests -->
     <section id="swap-requests" class="section">
@@ -98,9 +130,14 @@
       <ul id="swap-received-list" class="swap-list"></ul>
     </section>
 
+    <button id="logoutBtn" class="logout-btn">Logout</button>
+
+
   </main>
 
+  <script src="/socket.io/socket.io.js"></script>
   <script src="/js/dashboard.js"></script>
+  <script src="/js/auth.js"></script>
 
   <!-- Sidebar Navigation -->
   <script>

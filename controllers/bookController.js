@@ -1,4 +1,6 @@
 const Book = require('../models/Book');
+const { getQueue } = require('./borrowController');
+const { createNotification } = require('./notificationController');
 
 // This gets all library books and can also search by title, author or genre
 const getBooks = async (req, res) => {
@@ -116,14 +118,30 @@ const updateBook = async (req, res) => {
             });
         }
 
-        const updatedBook = await Book.findByIdAndUpdate(
-            req.params.id,
-            {
-                title,
-                author,
-                genre,
-                available: req.body.available
-            },
+        const current = await Book.findById(req.params.id).select('+reservationQueue +circulationVersion').lean();
+        if (!current) return res.status(404).json({ message: 'Book not found' });
+        const filter = { _id: req.params.id,
+            circulationVersion: current.circulationVersion === undefined ? { $exists: false } : current.circulationVersion
+        };
+        const changes = { title, author, genre, available: req.body.available };
+        const queue = getQueue(current);
+        let notifyUser = null;
+        // Making an unavailable book ready honours its queue rather than releasing it to everyone.
+        if (req.body.available === true) {
+            filter.borrowedBy = null;
+            if (queue.length) {
+                if (!queue[0].readyAt) {
+                    queue[0].readyAt = new Date();
+                    notifyUser = queue[0].user;
+                }
+                changes.available = false;
+                changes.reservationQueue = queue;
+                changes.reservedBy = queue[0].user;
+            }
+        }
+        const updatedBook = await Book.findOneAndUpdate(
+            filter,
+            { $set: changes, $inc: { circulationVersion: 1 } },
             {
                 returnDocument: 'after',
                 runValidators: true
@@ -131,9 +149,16 @@ const updateBook = async (req, res) => {
         );
 
         if (!updatedBook) {
-            return res.status(404).json({
-                message: 'Book not found'
+            const exists = await Book.exists({ _id: req.params.id });
+            return res.status(exists ? 409 : 404).json({
+                message: exists ? 'The book changed or is currently borrowed. Refresh before changing availability.' : 'Book not found'
             });
+        }
+
+        if (notifyUser) {
+            await createNotification({ user: notifyUser, type: 'system', title: 'Your reserved book is available',
+                message: `“${updatedBook.title}” is ready for you. Open Your Reservations in the dashboard to borrow it.`,
+                relatedId: updatedBook._id });
         }
 
         // Send a real-time event to connected catalogue pages
@@ -169,11 +194,16 @@ const updateBook = async (req, res) => {
 // Delete an existing library book
 const deleteBook = async (req, res) => {
     try {
-        const deletedBook = await Book.findByIdAndDelete(req.params.id);
+        // Keep historical loans available to students after they return a book.
+        const deletedBook = await Book.findOneAndDelete({
+            _id: req.params.id, borrowedBy: null, reservedBy: null,
+            'reservationQueue.0': { $exists: false }, 'loanHistory.0': { $exists: false }
+        });
 
         if (!deletedBook) {
-            return res.status(404).json({
-                message: 'Book not found'
+            const exists = await Book.exists({ _id: req.params.id });
+            return res.status(exists ? 409 : 404).json({
+                message: exists ? 'Books with loans, reservations or borrowing history cannot be deleted.' : 'Book not found'
             });
         }
 
