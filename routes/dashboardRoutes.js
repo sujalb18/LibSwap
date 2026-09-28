@@ -66,8 +66,9 @@ router.get("/reservations/:userId", authMiddleware, async (req, res) => {
       });
     }
 
-    const books = await Book.find({ reservedBy: userId });
-    return res.status(200).json({ success: true, data: books });
+    const books = await Book.find({ $or: [{ reservedBy: userId }, { 'reservationQueue.user': userId }] })
+      .select('+reservationQueue').lean();
+    return res.status(200).json({ success: true, data: books.map(book => circulationView(book, userId)) });
   } catch (error) {
     console.error("Dashboard reservations error:", error);
     return res.status(500).json({ success: false, message: "Server error" });
