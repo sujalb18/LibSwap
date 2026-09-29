@@ -18,6 +18,8 @@ The application uses a browser-based frontend, Node.js and Express backend, Mong
 - Authenticated user retrieval through `/api/auth/me`
 - Logout support
 
+The shared authentication frontend is used by both student and staff users. Logout clears the authentication values stored in localStorage and redirects the user back to the login page, providing a consistent sign-out flow across the application.
+
 ### Library Catalogue
 - Browse the shared library catalogue
 - Search by title, author, or genre
@@ -179,12 +181,56 @@ The final integrated application was also manually checked to confirm that swap 
 
 ### Reviews and Ratings
 LibSwap includes review and rating functionality integrated with the shared application.
+Students can submit ratings from 1 to 5 together with written comments for books in the catalogue.
+
+Review functionality includes:
+- Create a review for a book
+- View approved reviews
+- View personal submitted reviews
+- Edit personal reviews
+- Delete personal reviews
+- Ownership checks for review management
+- Validation for ratings and comments
+- Duplicate-review prevention
+- Re-authentication through JWT-protected requests
+
+New reviews are initially stored with a pending moderation status. When a student edits an existing review, the updated review returns to the moderation workflow before being displayed publicly again.
+
+The review workflow is:
+
+```text
+Student submits review
+        ↓
+Pending moderation
+        ↓
+Staff reviews submission
+        ↓
+Approve / Remove
+        ↓
+Approved review becomes visible
+
+Relevant review endpoints include:
+POST   /api/books/:bookId/reviews
+GET    /api/books/:bookId/reviews
+GET    /api/reviews/me
+PATCH  /api/reviews/:reviewId
+DELETE /api/reviews/:reviewId
 
 The final repository contains automated coverage for the review API as part of the integrated Jest test suite.
 
 ### Review Moderation
-Staff users can moderate submitted reviews.
 
+This fits **much better** because your current README already has the moderation section immediately after Reviews. :contentReference[oaicite:3]{index=3}
+
+---
+
+# 3. Tere 2 integration fixes
+
+Ye **best location is at the bottom**, because README already has:
+
+```md
+## Development Workflow at line 476.
+ 
 Moderation functionality includes:
 - Retrieve review data for moderation
 - Approve reviews
@@ -434,3 +480,8 @@ LibSwap was developed collaboratively using Git and GitHub with feature branches
 The final integration branch combines the team's implemented functionality and provides a common point for regression testing before the final merge into `main`.
 
 The final integrated checkpoint successfully passed all 79 automated tests across 7 Jest test suites.
+
+### Final Integration Fixes
+
+During final application integration, I identified and resolved two cross-feature UI issues. The staff administration page was missing the expected logout control, and the catalogue frontend was affected by an integration regression after changes from other feature branches were combined.
+

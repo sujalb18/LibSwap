@@ -134,7 +134,7 @@ main {
 
 /* =========================================
    REVIEW ACTIONS
-
+*/
 .book-review-actions {
     display: flex;
     gap: 10px;
@@ -177,7 +177,7 @@ main {
 
 /* =========================================
    REVIEW MODAL
-
+*/
 .review-modal {
     position: fixed;
 
@@ -473,7 +473,7 @@ main {
 
 /* =========================================
    REVIEWS
-
+*/
 .my-reviews-control {
     margin-top: 15px;
 }

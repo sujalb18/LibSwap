@@ -9,6 +9,13 @@ document.addEventListener('DOMContentLoaded', () => {
     if (registerForm) {
         registerForm.addEventListener('submit', handleRegister);
     }
+
+    const logoutButtons =
+        document.querySelectorAll('[data-logout]');
+
+    logoutButtons.forEach((button) => {
+        button.addEventListener('click', logoutUser);
+    });
 });
 
 
@@ -264,3 +271,14 @@ window.logoutUser = logoutUser;
 document.querySelectorAll('[data-logout]').forEach((button) => {
     button.addEventListener('click', logoutUser);
 });
+
+function logoutUser() {
+    localStorage.removeItem('token');
+    localStorage.removeItem('userId');
+    localStorage.removeItem('username');
+    localStorage.removeItem('fullName');
+    localStorage.removeItem('email');
+    localStorage.removeItem('role');
+
+    window.location.href = '/login.html';
+}
