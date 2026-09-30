@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
 
@@ -15,9 +16,15 @@
 <body>
 
     <!-- Main heading for the admin book management page -->
-    <header>
-        <h1>LibSwap Book Management</h1>
-        <p>Add, edit and remove books from the library catalogue.</p>
+    <header class="admin-header">
+        <div class="admin-header-content">
+            <h1>LibSwap Book Management</h1>
+            <p>Add, edit and remove books from the library catalogue.</p>
+        </div>
+
+        <button type="button" class="logout-button" data-logout>
+            Logout
+        </button>
     </header>
 
     <main>
@@ -30,34 +37,17 @@
 
                 <div class="form-group">
                     <label for="title">Book title</label>
-                    <input
-                        type="text"
-                        id="title"
-                        name="title"
-                        placeholder="Enter book title"
-                        required
-                    >
+                    <input type="text" id="title" name="title" placeholder="Enter book title" required>
                 </div>
 
                 <div class="form-group">
                     <label for="author">Author</label>
-                    <input
-                        type="text"
-                        id="author"
-                        name="author"
-                        placeholder="Enter author name"
-                        required
-                    >
+                    <input type="text" id="author" name="author" placeholder="Enter author name" required>
                 </div>
 
                 <div class="form-group">
                     <label for="genre">Genre</label>
-                    <input
-                        type="text"
-                        id="genre"
-                        name="genre"
-                        placeholder="Enter genre"
-                    >
+                    <input type="text" id="genre" name="genre" placeholder="Enter genre">
                 </div>
 
                 <div class="form-group">
@@ -111,12 +101,18 @@
         </section>
 
         <p class="catalogue-link">
+            <a href="moderation.html">Content Moderation</a>
+        </p>
+
+        <p class="catalogue-link">
             <a href="catalogue.html">View Library Catalogue</a>
         </p>
 
     </main>
-    
+
     <script src="js/admin-books.js"></script>
+    <script src="/js/auth.js"></script>
 
 </body>
+
 </html>
