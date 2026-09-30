@@ -2,12 +2,26 @@
 
 Library Management and Student Book Swapping System
 
-## Borrowing history and reservations
+## US03 – Borrow and Return Library Books
+
+As a student, I want to borrow and return library books and view my borrowing status.
+
+- **US03.1 – Borrowing history:** View current and returned loans with their borrowing and return dates.
+- **US03.2 – Due dates:** View the 14-day due date for each new loan and see when a loan is overdue.
+- **US03.3 – Book availability:** Automatically update availability when a book is borrowed or returned, respecting existing reservations.
 
 Sign in at `/login.html`, then open `/dashboard.html`.
 **Borrowed Books** shows current loans, due dates, overdue status and borrowing history.
 Use **Return book** to finish a loan. New loans last 14 days; older loans without
 dates display “Not recorded” rather than an invented due date.
+
+## US04 – Reserve Unavailable Library Books
+
+As a student, I want to reserve unavailable library books and track my reservation status.
+
+- **US04.1 – Reservation status:** See whether a reservation is waiting or ready to borrow.
+- **US04.2 – Reservation queue:** See my position in the first-come, first-served queue without exposing other students' identities.
+- **US04.3 – Availability notification:** Receive an in-app notification when my reserved book becomes available for me to borrow.
 
 **Your Reservations** shows waiting/ready status and your position in the first-come
 queue, without exposing other students' identities. When a book is returned, the
@@ -16,7 +30,7 @@ The book remains unavailable to other students until the queue is served.
 Existing Socket.IO events refresh dashboard and catalogue availability. Use
 **Refresh status** if the live connection is interrupted.
 
-Authenticated endpoints:
+### Borrowing and reservation APIs
 
 - `GET /api/books/circulation`: your loan history, book actions and queue positions.
 - `POST /api/books/borrow/:bookId`: borrow an available book or your ready reservation.
