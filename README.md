@@ -3,6 +3,13 @@
 Library Management and Student Book Swapping System
 
 LibSwap is a web-based application developed for SIT725 that combines library catalogue management with student book borrowing, reservations, personal book management, peer-to-peer swapping, reviews, moderation, notifications, and missing-book requests.
+## US03 – Borrow and Return Library Books
+
+As a student, I want to borrow and return library books and view my borrowing status.
+
+- **US03.1 – Borrowing history:** View current and returned loans with their borrowing and return dates.
+- **US03.2 – Due dates:** View the 14-day due date for each new loan and see when a loan is overdue.
+- **US03.3 – Book availability:** Automatically update availability when a book is borrowed or returned, respecting existing reservations.
 
 The application uses a browser-based frontend, Node.js and Express backend, MongoDB with Mongoose, JWT-based authentication and role-based authorization, and Socket.IO for real-time updates.
 
@@ -11,6 +18,63 @@ The application uses a browser-based frontend, Node.js and Express backend, Mong
 ### Authentication and Roles
 - Student registration and login
 - Password hashing with bcryptjs
+## US04 – Reserve Unavailable Library Books
+
+As a student, I want to reserve unavailable library books and track my reservation status.
+
+- **US04.1 – Reservation status:** See whether a reservation is waiting or ready to borrow.
+- **US04.2 – Reservation queue:** See my position in the first-come, first-served queue without exposing other students' identities.
+- **US04.3 – Availability notification:** Receive an in-app notification when my reserved book becomes available for me to borrow.
+
+**Your Reservations** shows waiting/ready status and your position in the first-come
+queue, without exposing other students' identities. When a book is returned, the
+first student receives an in-app notification and can borrow it from this section.
+The book remains unavailable to other students until the queue is served.
+Existing Socket.IO events refresh dashboard and catalogue availability. Use
+**Refresh status** if the live connection is interrupted.
+
+### Borrowing and reservation APIs
+
+- `GET /api/books/circulation`: your loan history, book actions and queue positions.
+- `POST /api/books/borrow/:bookId`: borrow an available book or your ready reservation.
+- `POST /api/books/return/:bookId`: return your current loan.
+- `POST /api/books/reserve/:bookId`: join an unavailable book's reservation queue.
+
+Library staff cannot mark a borrowed book available or delete a book with loan
+history. Marking an unavailable, unborrowed book available alerts its first queued
+student. Personal swap books remain separate from library borrowing.
+
+Run `npm test` for the existing suite, or `npm test -- --runTestsByPath tests/bookApi.test.js`
+for book and circulation integration tests. Tests use temporary MongoDB databases.
+
+
+# Swap Request Dashboard
+
+The Swap Request Dashboard allows students to submit a request to swap a book. It is accessed from the main Student Dashboard.
+
+## Features Implemented
+
+### 1. Dashboard Navigation
+- Students can switch from the main dashboard to the Swap Request dashboard using the navigation button.
+
+### 2. Swap Request Form
+- Simple form layout for entering swap details.
+- Clean and easy-to-understand interface.
+
+### 3. Return Navigation
+- Students can return to the main dashboard.
+=======
+=======
+
+## Overview
+
+LibSwap is a web-based library and book-swapping application developed for SIT725.
+
+The project combines traditional library catalogue functionality with student book-management and swapping features. It uses a browser-based frontend, a Node.js and Express backend, MongoDB for persistent storage, JWT-based authentication, role-based authorization, and Socket.IO for real-time catalogue updates.
+
+The current project contains functionality for:
+
+- User registration and login
 - JWT authentication
 - Authentication middleware for protected routes
 - Student and staff roles
